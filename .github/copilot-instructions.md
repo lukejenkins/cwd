@@ -1,3 +1,5 @@
+# Instructions for Copilot
+
 Write code with clear variable names and include explanatory comments for non-obvious logic. Avoid shorthand syntax and complex patterns.
 
 Provide full implementations rather than partial snippets. Include import statements, required dependencies, and initialization code.
@@ -32,7 +34,7 @@ Use consistent naming conventions and follow language-specific best practices.
 
 Write concise, efficient, and idiomatic code that is also easily understandable.
 
-We will use Python3 and dotenv. 
+We will use Python3 and dotenv.
 
 Follow PEP 8 style guidelines.
 
