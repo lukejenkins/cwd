@@ -37,7 +37,9 @@ htmlcov/
 .pytest_cache/
 
 # Output files
-output/
+output/*
+## But we do want to have a readme
+!output/README.md
 
 # Private examples - important to keep these out of the repository
 !examples/private/
@@ -71,3 +73,6 @@ Icon[
 Network Trash Folder
 Temporary Items
 .apdisk
+
+.env
+
