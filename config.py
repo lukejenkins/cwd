@@ -40,6 +40,18 @@ def load_config() -> Dict[str, Any]:
         # Output settings
         "CSV_DIR": os.getenv("CSV_DIR", "output"),
         "CSV_FILENAME": os.getenv("CSV_FILENAME", "cell_data.csv"),
+        "JSON_DIR": os.getenv("JSON_DIR", "output"),
+        "JSON_FILENAME": os.getenv("JSON_FILENAME", "modem_info.json"),
+        
+        # Database settings (for potential future use)
+        "USE_DATABASE": os.getenv("USE_DATABASE", "false").lower() == "true",
+        "DB_TYPE": os.getenv("DB_TYPE", "sqlite"),
+        "DB_PATH": os.getenv("DB_PATH", os.path.join(os.getenv("LOG_DIR", "output"), "cell_data.sqlite")),
+        
+        # Command cadence settings - how often to run different command sets (in seconds)
+        "FAST_COMMAND_INTERVAL": float(os.getenv("FAST_COMMAND_INTERVAL", "5.0")),
+        "MEDIUM_COMMAND_INTERVAL": float(os.getenv("MEDIUM_COMMAND_INTERVAL", "30.0")),
+        "SLOW_COMMAND_INTERVAL": float(os.getenv("SLOW_COMMAND_INTERVAL", "300.0")),
     }
     
     return config
