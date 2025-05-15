@@ -170,10 +170,3 @@ The `AT+QCFG` command is a versatile command used for various module configurati
 * This list is based on publicly available documents and common knowledge for Quectel modules.
 * Command availability and behavior can sometimes vary slightly between firmware versions or specific module sub-variants.
 * **Always refer to the official Quectel PDF manuals for the EG25 (or your specific module variant) as the definitive reference.**
-
-## Links to publicly available manuals
-
-* Via <https://wiki.pine64.org/wiki/PineModems>
-  * <https://wiki.pine64.org/wiki/File:Quectel_EC2x%26EG9x%26EG2x-G%26EM05_Series_AT_Commands_Manual_V2.0.pdf>
-  * <https://wiki.pine64.org/wiki/File:Quectel_EC2xEG25-GEG9xEM05_FILE_AT_Commands_Manual_V1.0.pdf>
-  * <https://wiki.pine64.org/wiki/File:Quectel_EC2x%26EG9x%26EG2x-G%26EM05_Series_GNSS_Application_Note_V1.3.pdf>
