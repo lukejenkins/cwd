@@ -65,8 +65,6 @@ AT$GPSP=1
 # GPS - Turn on NMEA stream and all sentences
 AT$GPSNMUN=2,1,1,1,1,1,1
 AT$GPSNMUNEX=1,1,1
-# GPS - Set GPS location service mode to autonomous
-AT$GPSSLSR=2,3,,,,,1,255
 # GPS - Set GPS position mode to autonomous only
 AT$AGPSEN=0
 # GPS - Configure constellations - GPS + GLONASS + Beidou + Galileo
@@ -85,14 +83,10 @@ AT+CGMM
 AT+CGMR
 # Query module serial number:
 AT+CGSN
-# Query module IMEI:
-AT+CGSN=1
 # Query SIM ICCID:
 AT+CICCID
 # Query SIM IMSI:
 AT+CIMI
-# Get all firmware information:
-AT#FIRMWARE
 # Get the full list of MBNs and versions:
 AT#GETFWEXT
 # Get the current MBN version:
@@ -159,7 +153,107 @@ AT+CREG?
 ### Run Once Schema
 
 ```json
-#Schema goes here
+{
+  "host_timestamp": "2023-10-01T12:13:37Z"
+  "cgmi": "Telit",
+  "cgmm": "LM960A18",
+  "cgmr": "32.01.150",
+  "cgsn": "3579XXXXXXXXXXX",
+  "cimi": "3102XXXXXXXXXXX",
+  "getfwext_host_firmware": "32.01.000",
+  "getfwex_table": [
+    {
+      "getfwext_slot": 1,
+      "getfwext_status": null,
+      "getfwext_carrier": "Generic",
+      "getfwext_version.": "32.01.110",
+      "getfwext_tmcfg.": 1027,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 1
+    },
+    {
+      "getfwext_slot": 1,
+      "getfwext_status": null,
+      "getfwext_carrier": "Telstra",
+      "getfwext_version.": "32.01.110",
+      "getfwext_tmcfg.": 1027,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 1
+    },
+    {
+      "getfwext_slot": 1,
+      "getfwext_status": null,
+      "getfwext_carrier": "Docomo",
+      "getfwext_version.": "32.01.110",
+      "getfwext_tmcfg.": 1027,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 1
+    },
+    {
+      "getfwext_slot": 4,
+      "getfwext_status": null,
+      "getfwext_carrier": "Verizon",
+      "getfwext_version.": "32.01.120",
+      "getfwext_tmcfg.": 2022,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 2
+    },
+    {
+      "getfwext_slot": 5,
+      "getfwext_status": "Activated",
+      "getfwext_carrier": "ATT",
+      "getfwext_version.": "32.01.140",
+      "getfwext_tmcfg.": 4024,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 3
+    },
+    {
+      "getfwext_slot": 5,
+      "getfwext_status": null,
+      "getfwext_carrier": "FirstNet",
+      "getfwext_version.": "32.01.140",
+      "getfwext_tmcfg.": 4024,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 3
+    },
+    {
+      "getfwext_slot": 7,
+      "getfwext_status": null,
+      "getfwext_carrier": "TMUS",
+      "getfwext_version.": "32.01.150",
+      "getfwext_tmcfg.": 5008,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 4
+    },
+    {
+      "getfwext_slot": 7,
+      "getfwext_status": null,
+      "getfwext_carrier": "Bell",
+      "getfwext_version.": "32.01.150",
+      "getfwext_tmcfg.": 5008,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 4
+    },
+    {
+      "getfwext_slot": 7,
+      "getfwext_status": null,
+      "getfwext_carrier": "Rogers",
+      "getfwext_version.": "32.01.150",
+      "getfwext_tmcfg.": 5008,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 4
+    },
+    {
+      "getfwext_slot": 7,
+      "getfwext_status": null,
+      "getfwext_carrier": "Telus",
+      "getfwext_version.": "32.01.150",
+      "getfwext_tmcfg.": 5008,
+      "getfwext_cnv": "empty",
+      "getfwext_loc": 4
+    }
+  ]
+}
 ```
 
 ### Loop Schema
@@ -167,3 +261,11 @@ AT+CREG?
 ```json
 #Schema goes here
 ```
+
+## Tech Stack
+
+- Python 3.x
+- [pyserial](https://pypi.org/project/pyserial/)
+  - The pyserial library provides a simple interface for reading and writing data to the serial port.
+- [python-dotenv](https://pypi.org/project/python-dotenv/)
+  - The dotenv library is used to load environment variables from a .env file into the Python environment.

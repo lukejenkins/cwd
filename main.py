@@ -33,7 +33,6 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT$GPSP=1",      # Power on the GPS functionality
             "AT$GPSNMUN=2,1,1,1,1,1,1",  # GPS - Turn on NMEA stream and all sentences
             "AT$GPSNMUNEX=1,1,1",        # GPS - Extended NMEA sentences
-            "AT$GPSSLSR=2,3,,,,,1,255",  # GPS - Set GPS location service mode to autonomous
             "AT$AGPSEN=0",               # GPS - Set GPS position mode to autonomous only
             "AT$GNSSCONF=6,0",           # GPS - Configure constellations
             "AT$GPSSAV",                 # GPS - Save Parameters
@@ -45,10 +44,8 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+CGMM",        # Query module model
             "AT+CGMR",        # Query module revision
             "AT+CGSN",        # Query module serial number
-            "AT+CGSN=1",      # Query module IMEI
             "AT+CICCID",      # Query SIM ICCID
             "AT+CIMI",        # Query SIM IMSI
-            "AT#FIRMWARE",    # Get all firmware information
             "AT#GETFWEXT",    # Get the full list of MBNs and versions
             "AT#GETFWVER",    # Get the current MBN version
             "AT#GETFW?",      # Get the active carrier
@@ -59,7 +56,6 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT$GPSP?",       # GPS - Power - Check
             "AT$GPSNMUN?",    # GPS - Check NMEA stream status
             "AT$GPSNMUNEX?",  # GPS - Check NMEA extended data configuration
-            "AT$GPSSLSR?",    # GPS - Check GPS location service mode
             "AT$AGPSEN?",     # GPS - Check GPS position mode
             "AT$GNSSCONF?",   # GPS - Check GNSS constellation configuration
             "AT$GPSANTPORT?", # GPS - Check antenna port configuration

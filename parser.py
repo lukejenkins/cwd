@@ -35,27 +35,23 @@ def parse_modem_info(command: str, response: str) -> Dict[str, Any]:
     # Parse based on command
     if command.startswith("AT+CGMI"):  # Manufacturer
         if len(lines) > 0 and "ERROR" not in lines[0]:
-            result["manufacturer"] = lines[0]
+            result["cgmi"] = lines[0]
     
     elif command.startswith("AT+CGMM"):  # Model
         if len(lines) > 0 and "ERROR" not in lines[0]:
-            result["model"] = lines[0]
+            result["cgmm"] = lines[0]
     
     elif command.startswith("AT+CGMR"):  # Firmware version
         if len(lines) > 0 and "ERROR" not in lines[0]:
-            result["firmware"] = lines[0]
+            result["cgmr"] = lines[0]
     
     elif command.startswith("AT+CGSN"):  # Serial number
         if len(lines) > 0 and "ERROR" not in lines[0]:
-            # Handle different CGSN formats
-            if "=" in command:  # AT+CGSN=1 for IMEI
-                result["imei"] = lines[0]
-            else:  # AT+CGSN for serial number
-                result["serial_number"] = lines[0]
+            result["cgsn"] = lines[0]
     
     elif command.startswith("AT+CIMI"):  # IMSI
         if len(lines) > 0 and "ERROR" not in lines[0]:
-            result["imsi"] = lines[0]
+            result["cimi"] = lines[0]
     
     elif command.startswith("AT+CICCID"):  # SIM ICCID
         if len(lines) > 0 and "ERROR" not in lines[0]:
@@ -75,19 +71,67 @@ def parse_modem_info(command: str, response: str) -> Dict[str, Any]:
                     if len(parts) >= 4:
                         result["act"] = parts[3].strip()
     
-    elif command.startswith("AT#FIRMWARE"):  # Firmware info
-        result["firmware_details"] = "\n".join(lines)
-    
     elif command.startswith("AT#GETFWEXT"):  # MBN list
-        result["mbns"] = []
+        # Initialize the getfwext data
+        if not "getfwext_host_firmware" in result:
+            result["getfwext_host_firmware"] = ""
+            result["getfwex_table"] = []
+        
+        # First line often contains host firmware version
+        if lines and "HOST FIRMWARE" in lines[0]:
+            host_fw_line = lines[0].strip()
+            if ":" in host_fw_line:
+                result["getfwext_host_firmware"] = host_fw_line.split(":", 1)[1].strip()
+            
+            # Remove processed line
+            lines = lines[1:]
+        
+        # Skip "MODEM FIRMWARE" line and column headers if present
+        skip_lines = 0
+        for i, line in enumerate(lines):
+            if "MODEM FIRMWARE" in line or "INDEX" in line:
+                skip_lines = i + 1
+                break
+        
+        if skip_lines > 0:
+            lines = lines[skip_lines:]
+        
+        # Process remaining lines as carrier entries
         for line in lines:
-            if ":" in line and "ERROR" not in line:
-                result["mbns"].append(line.strip())
+            if not line.strip() or "ERROR" in line:
+                continue
+            
+            # Split line into fields
+            fields = line.split()
+            if len(fields) < 7:
+                continue
+            
+            # Extract values from fields
+            entry = {
+                "getfwext_slot": int(fields[0]) if fields[0].isdigit() else None,
+                "getfwext_status": fields[1] if len(fields) > 1 and not fields[1].isdigit() else None,
+                "getfwext_carrier": fields[-5] if len(fields) > 5 else "",
+                "getfwext_version.": fields[-4] if len(fields) > 4 else "",
+                "getfwext_tmcfg.": int(fields[-3]) if len(fields) > 3 and fields[-3].isdigit() else None,
+                "getfwext_cnv": fields[-2] if len(fields) > 2 else "",
+                "getfwext_loc": int(fields[-1]) if len(fields) > 1 and fields[-1].isdigit() else None
+            }
+            
+            # Handle status field correctly
+            if entry["getfwext_status"] == "Activated" or entry["getfwext_status"] == "Active":
+                pass  # Keep as is
+            else:
+                # If first field after index isn't status, shift everything
+                carrier_idx = 1 if entry["getfwext_status"] else 0
+                entry["getfwext_status"] = None
+                entry["getfwext_carrier"] = fields[carrier_idx] if len(fields) > carrier_idx else ""
+                
+            result["getfwex_table"].append(entry)
     
     elif command.startswith("AT#GETFWVER"):  # Current MBN version
         for line in lines:
             if ":" in line and "ERROR" not in line:
-                result["mbn_version"] = line.strip()
+                result["getfwver"] = line.strip()
     
     elif command.startswith("AT#GETFW?"):  # Active carrier
         for line in lines:
@@ -112,11 +156,6 @@ def parse_modem_info(command: str, response: str) -> Dict[str, Any]:
         for line in lines:
             if "$GPSNMUNEX:" in line:
                 result["nmea_extended_config"] = line.split(":", 1)[1].strip()
-    
-    elif command.startswith("AT$GPSSLSR?"):  # GPS location service mode
-        for line in lines:
-            if "$GPSSLSR:" in line:
-                result["gps_service_mode"] = line.split(":", 1)[1].strip()
     
     elif command.startswith("AT$AGPSEN?"):  # GPS position mode
         for line in lines:
@@ -963,21 +1002,29 @@ class ModemResponseParser:
             writer.writerow(self.modem_info)
     
     def _write_modem_info_json(self) -> None:
-        """Write modem information to JSON file."""
+        """Write modem information to JSON file in the format specified in README.md."""
         # Only write if we have some modem info
         if not self.modem_info:
             return
         
-        # Read existing JSON data
-        try:
-            with open(self.json_path, 'r') as f:
-                data = json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-            data = {}
+        # Create a structured output matching the README's schema
+        output_data = {
+            "host_timestamp": datetime.now().isoformat()
+        }
         
-        # Update with new info
-        data.update(self.modem_info)
+        # Add basic modem information fields
+        for key in ["cgmi", "cgmm", "cgmr", "cgsn", "cimi"]:
+            if key in self.modem_info:
+                output_data[key] = self.modem_info[key]
         
-        # Write back to file
+        # Add firmware information
+        if "getfwext_host_firmware" in self.modem_info:
+            output_data["getfwext_host_firmware"] = self.modem_info["getfwext_host_firmware"]
+        
+        # Add the firmware table if available
+        if "getfwex_table" in self.modem_info:
+            output_data["getfwex_table"] = self.modem_info["getfwex_table"]
+        
+        # Write to file
         with open(self.json_path, 'w') as f:
-            json.dump(data, f, indent=2)
+            json.dump(output_data, f, indent=2)
