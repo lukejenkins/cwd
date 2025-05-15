@@ -6,7 +6,7 @@
 
 The purpose of this project is to create a python program that:
 
-- [ ] Opens a serial port to interact with a cellular modem - Initially we're going to use the Telit LM960
+- [ ] Opens a serial port to interact with a cellular modem - Initially we're going to use the Quectel EG25-G module
 - [ ] Runs some commands to set up the modem for our purposes
 - [ ] Runs some commands once to gather data from the modem that shouldn't change
   - [ ] Make of the modem
@@ -14,7 +14,7 @@ The purpose of this project is to create a python program that:
   - [ ] Firmware version
   - [ ] Serial number
   - [ ] SIM info
-  - [ ] Firmware subersion/carrier profile details
+  - [ ] Firmware subversion/carrier profile details
   - [ ] Cell technology configuration (e.g. LTE vs. 5GNR preference)
   - [ ] Band capabilities and configuration
 - [ ] There will be a main loop where we run a list of commands in a loop until the program is terminated
@@ -23,7 +23,7 @@ The purpose of this project is to create a python program that:
     - [ ] Gather Location information from a data source such as the cell modem or gpsd
     - [ ] Information about the cell that the modem is connected to as well as all signal stats
     - [ ] Any other cells that the modem can provide us information about and any signal information available
-  - [ ] Commands that run less often will gather stats that won't chage as often
+  - [ ] Commands that run less often will gather stats that won't change as often
     - [ ] Stats such as the temperature of the cell modem
     - [ ] If we're connected to a data service through the cell modem and details about that
 - [ ] We will record all output to
@@ -58,19 +58,61 @@ These commands are run once when the program starts up. They are used to gather 
 AT+CMEE=2
 
 ######
-## Setup the modem:
+## Setup the Cellular Modem:
 ######
-# Power on the GPS functionality:
-AT$GPSP=1
-# GPS - Turn on NMEA stream and all sentences
-AT$GPSNMUN=2,1,1,1,1,1,1
-AT$GPSNMUNEX=1,1,1
-# GPS - Set GPS position mode to autonomous only
-AT$AGPSEN=0
-# GPS - Configure constellations - GPS + GLONASS + Beidou + Galileo
-AT$GNSSCONF=6,0
-# GPS - Save Parameters
-AT$GPSSAV
+# Enable automatic time zone update via NITZ and update LOCAL time to RTC
+AT+CTZU=3
+# Clear the FPLMN list
+AT+QFPLMNCFG="Delete","all" 
+
+######
+## Setup the GNSS:
+######
+# Power off the GNSS functionality so we can configure it:
+AT+QGPSEND
+# GNSS - Set the output port to "USB NMEA", one of the TTYs presented to the host OS
+AT+QGPSCFG="outport","usbnmea"
+
+# GNSS - Enable use of the AT+QGPSGNMEA command to output NMEA sentences to the AT port
+AT+QGPSCFG="nmeasrc",1
+
+# GNSS - Turn on all GPS NMEA Sentences
+AT+QGPSCFG="gpsnmeatype",31
+
+# GNSS - Turn on all GLONASS NMEA Sentences
+AT+QGPSCFG="glonassnmeatype",7
+
+# GNSS - Turn on all Galileo NMEA Sentences 
+AT+QGPSCFG="galileonmeatype",1
+
+# GNSS - Turn on all Beidou NMEA Sentences
+AT+QGPSCFG="beidounmeatype",3
+
+# GNSS - Turn on Extended GGSV
+AT+QGPSCFG="gsvextnmeatype",1
+
+# GNSS - Turn on all supported GNSS constellations
+AT+QGPSCFG="gnssconfig",1
+
+# GNSS - Enable the GNSS functionality to run automatically on module restart
+AT+QGPSCFG="autogps",1
+
+# GNSS - Configure GNSS to operate in standalone mode only. No AGPS.
+AT+QGPSCFG="agpsposmode",0
+
+# GNSS - Set NMEA Output Frequency to 10Hz
+AT+QGPSCFG="fixfreq",10
+
+# GNSS - (possibly) turn on 1PPS output to somewhere
+AT+QGPSCFG="1pps",1
+
+# GNSS - Turn on raw GNSS output, all constellations, to the NMEA port
+# Source: https://github.com/commaai/openpilot/pull/29745/files
+AT+QGPSCFG="gnssrawdata",31,0
+
+# Power on the GNSS functionality:
+AT+QGPS=1
+
 
 ######
 ## Query all of the things we want to record once:
@@ -84,38 +126,50 @@ AT+CGMR
 # Query module serial number:
 AT+CGSN
 # Query SIM ICCID:
-AT+CICCID
+AT+QCCID
 # Query SIM IMSI:
 AT+CIMI
 # Get the full list of MBNs and versions:
-AT#GETFWEXT
-# Get the current MBN version:
-AT#GETFWVER
-# Get the active carrier
-AT#GETFW?
-# GPS - Power - Check
-AT$GPSP?
-# GPS - Check NMEA stream status
-AT$GPSNMUN?
-# GPS - Check NMEA extended data configuration
-AT$GPSNMUNEX?
-# GPS - Check GPS location service mode
-AT$GPSSLSR?
-# GPS - Check GPS position mode
-AT$AGPSEN?
-# GPS - Check GNSS constellation configuration
-AT$GNSSCONF?
-# GPS - Check antenna port configuration
-AT$GPSANTPORT?
-
+AT+QMBNCFG="List"
+# GNSS - Power - Check
+AT+QGPS?
+# GNSS - Check all of the things we set above
+AT+QGPSCFG="outport"
+AT+QGPSCFG="nmeasrc"
+AT+QGPSCFG="gpsnmeatype"
+AT+QGPSCFG="glonassnmeatype"
+AT+QGPSCFG="galileonmeatype"
+AT+QGPSCFG="beidounmeatype"
+AT+QGPSCFG="gsvextnmeatype"
+AT+QGPSCFG="gnssconfig"
+AT+QGPSCFG="autogps"
+AT+QGPSCFG="agpsposmode"
+AT+QGPSCFG="fixfreq"
+AT+QGPSCFG="1pps"
+AT+QGPSCFG="gnssrawdata"
+# Read Automatic Time Zone Update configuration
+AT+CTZU?
 # Read configured LTE bands
-AT#BND?
+AT+QCFG="band"
 
-# Get the Preferred Operator List from the SIM
-AT+CPOL? 
-# Get the list of preferred PLMNs in the SIM
-AT+CPLS?
-AT+CPLS=?
+# Check network scan mode (RAT limitations)
+AT+QCFG="NWSCANMODE"
+
+# Check what bands are set to be scanned 
+AT+QOPSCFG="scancontrol" 
+
+# Check if there are any LTE network locking settings
+AT+QNWLOCK="common/lte"
+
+# Check if there are any 4g network locking settings
+AT+QNWLOCK="common/4g"
+
+#Check FPMLN List
+AT+QFPLMNCFG="list"
+
+# Enumerate what will be returned by the "AT+CIND?" command 
+AT+CIND=?
+
 ```
 
 ### Loop Commands
@@ -126,26 +180,86 @@ These commands are run continously in a loop. They are used to gather informatio
 
 # Read the current setting of <fun>.
 AT+CFUN? 
-# Read the real-time clock:
+
+# Read the real-time clock
 AT+CCLK?
-# Get Acquired Position
-AT$GPSACP?
-# Get the current location:
-AT$GETLOCATION
-# Get the current GPS Quality of signal:
-AT$GPSQOS? 
-# Read the receieved signal quality indicators:
+
+# Obtain the Latest Time Synchronized Through Network
+AT+QLTS
+
+# Get the current location
+AT+QGPSLOC
+
+# Get the current GNSS Quality of signal
+AT+QGPSCFG="estimation_error"
+
+# Get one set of each of the following GNSS NMEA sentances. Possibly trim this down a bit.
+AT+QGPSGNMEA="GGA"
+AT+QGPSGNMEA="RMC"
+AT+QGPSGNMEA="GSV"
+AT+QGPSGNMEA="GSA"
+AT+QGPSGNMEA="VTG"
+AT+QGPSGNMEA="GNS"
+
+# Read the receieved signal quality indicators
+# +CSQ: <rssi>,<ber>
 AT+CSQ 
-# Read the current extended signal quality indicators:
-AT+CESQ
+
+# Report Signal Quality
+# <sysmode> <value1> <value2> <value3> <value4>
+# "NOSERVICE" - - - -
+# "GSM" <gsm_rssi> - - -
+# "TDSCDMA" <tdscdma_rssi> <tdscdma_rscp> <tdscdma_ecio> -
+# "WCDMA" <wcdma_rssi> <wcdma_rscp> <wcdma_ecio> -
+# "LTE" <lte_rssi> <lte_rsrp> <lte_sinr> <lte_rsrq>
+AT+QCSQ
+
+# Query Network Information
+# +QNWINFO: <access technology>,<oper>,<band>,<Channel ID>
+AT+QNWINFO
+
+# Display the Name of Registered Network
+# +QSPN: <FNN>,<SNN>,<SPN>,<alphabet>,<RPLMN>
+# <FNN> String type. Full network name.
+# <SNN> String type. Short network name.
+# <SPN> String type. Service provider name.
+# <alphabet> Integer type. Alphabet of full network name and short network name.
+# 0 GSM 7-bit default alphabet
+# 1 UCS2
+# <RPLMN> String type. Registered PLMN.
+AT+QSPN
+
+# Query rsssnr of LTE network
+AT+QNETINFO=2,1
+
+# Query timingadvance of LTE network
+AT+QNETINFO=2,2
+
+# Query DRX of LTE network
+AT+QNETINFO=2,4
+
 #Read the current service state (associated with a cell network)
 AT+CGATT?
-#Reads current network status,
-AT#RFSTS
-# Query the current network operator:
+
+# Query the current network operator
 AT+COPS?
-# Query the current network registration status:
+
+# Query the current network registration status
 AT+CREG?
+
+# Query the information of serving cells
+AT+QENG="servingcell"
+
+# Query the information of neighbour cells
+AT+QENG="neighbourcell"
+
+
+#  Command of Control Instructions
+# +CIND: ("battchg",(0-5)),("signal",(0-5)),("service",(0-1)),("call",(0-1)),("roam",(0-1)),("smsfull",(0-1)),("GPRS coverage",(0-1)),("callsetup",(0-3))
+AT+CIND?
+
+# Read the real-time clock a second time
+AT+CCLK?
 ```
 
 ## Schemas
@@ -153,107 +267,7 @@ AT+CREG?
 ### Run Once Schema
 
 ```json
-{
-  "host_timestamp": "2023-10-01T12:13:37Z"
-  "cgmi": "Telit",
-  "cgmm": "LM960A18",
-  "cgmr": "32.01.150",
-  "cgsn": "3579XXXXXXXXXXX",
-  "cimi": "3102XXXXXXXXXXX",
-  "getfwext_host_firmware": "32.01.000",
-  "getfwex_table": [
-    {
-      "getfwext_slot": 1,
-      "getfwext_status": null,
-      "getfwext_carrier": "Generic",
-      "getfwext_version.": "32.01.110",
-      "getfwext_tmcfg.": 1027,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 1
-    },
-    {
-      "getfwext_slot": 1,
-      "getfwext_status": null,
-      "getfwext_carrier": "Telstra",
-      "getfwext_version.": "32.01.110",
-      "getfwext_tmcfg.": 1027,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 1
-    },
-    {
-      "getfwext_slot": 1,
-      "getfwext_status": null,
-      "getfwext_carrier": "Docomo",
-      "getfwext_version.": "32.01.110",
-      "getfwext_tmcfg.": 1027,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 1
-    },
-    {
-      "getfwext_slot": 4,
-      "getfwext_status": null,
-      "getfwext_carrier": "Verizon",
-      "getfwext_version.": "32.01.120",
-      "getfwext_tmcfg.": 2022,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 2
-    },
-    {
-      "getfwext_slot": 5,
-      "getfwext_status": "Activated",
-      "getfwext_carrier": "ATT",
-      "getfwext_version.": "32.01.140",
-      "getfwext_tmcfg.": 4024,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 3
-    },
-    {
-      "getfwext_slot": 5,
-      "getfwext_status": null,
-      "getfwext_carrier": "FirstNet",
-      "getfwext_version.": "32.01.140",
-      "getfwext_tmcfg.": 4024,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 3
-    },
-    {
-      "getfwext_slot": 7,
-      "getfwext_status": null,
-      "getfwext_carrier": "TMUS",
-      "getfwext_version.": "32.01.150",
-      "getfwext_tmcfg.": 5008,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 4
-    },
-    {
-      "getfwext_slot": 7,
-      "getfwext_status": null,
-      "getfwext_carrier": "Bell",
-      "getfwext_version.": "32.01.150",
-      "getfwext_tmcfg.": 5008,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 4
-    },
-    {
-      "getfwext_slot": 7,
-      "getfwext_status": null,
-      "getfwext_carrier": "Rogers",
-      "getfwext_version.": "32.01.150",
-      "getfwext_tmcfg.": 5008,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 4
-    },
-    {
-      "getfwext_slot": 7,
-      "getfwext_status": null,
-      "getfwext_carrier": "Telus",
-      "getfwext_version.": "32.01.150",
-      "getfwext_tmcfg.": 5008,
-      "getfwext_cnv": "empty",
-      "getfwext_loc": 4
-    }
-  ]
-}
+#Schema goes here
 ```
 
 ### Loop Schema
