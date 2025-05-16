@@ -29,70 +29,102 @@ def setup_modem_commands() -> Dict[str, List[str]]:
     commands = {
         # Setup commands to configure the modem
         "setup": [
-            "AT+CMEE=2",      # Set the error reporting to verbose
-            "AT$GPSP=1",      # Power on the GPS functionality
-            "AT$GPSNMUN=2,1,1,1,1,1,1",  # GPS - Turn on NMEA stream and all sentences
-            "AT$GPSNMUNEX=1,1,1",        # GPS - Extended NMEA sentences
-            "AT$AGPSEN=0",               # GPS - Set GPS position mode to autonomous only
-            "AT$GNSSCONF=6,0",           # GPS - Configure constellations
-            "AT$GPSSAV",                 # GPS - Save Parameters
+            "AT+CMEE=2",                         # Set the error reporting to verbose
+            "AT+CTZU=3",                         # Enable automatic time zone update via NITZ and update LOCAL time to RTC
+            'AT+QFPLMNCFG="Delete","all"',       # Clear the FPLMN list
+            "AT+QGPSEND",                        # Power off the GNSS functionality so we can configure it
+            'AT+QGPSCFG="outport","usbnmea"',    # GNSS - Set the output port to "USB NMEA", one of the TTYs presented to the host OS
+            'AT+QGPSCFG="nmeasrc",1',            # GNSS - Enable use of the AT+QGPSGNMEA command to output NMEA sentences to the AT port
+            'AT+QGPSCFG="gpsnmeatype",31',       # GNSS - Turn on all GPS NMEA Sentences
+            'AT+QGPSCFG="glonassnmeatype",7',    # GNSS - Turn on all GLONASS NMEA Sentences
+            'AT+QGPSCFG="galileonmeatype",1',    # GNSS - Turn on all Galileo NMEA Sentences 
+            'AT+QGPSCFG="beidounmeatype",3',     # GNSS - Turn on all Beidou NMEA Sentences
+            'AT+QGPSCFG="gsvextnmeatype",1',     # GNSS - Turn on Extended GGSV
+            'AT+QGPSCFG="gnssconfig",1',         # GNSS - Turn on all supported GNSS constellations
+            'AT+QGPSCFG="autogps",1',            # GNSS - Enable the GNSS functionality to run automatically on module restart
+            'AT+QGPSCFG="agpsposmode",0',        # GNSS - Configure GNSS to operate in standalone mode only. No AGPS.
+            'AT+QGPSCFG="fixfreq",10',           # GNSS - Set NMEA Output Frequency to 10Hz
+            'AT+QGPSCFG="1pps",1',               # GNSS - (possibly) turn on 1PPS output to somewhere
+            'AT+QGPSCFG="gnssrawdata",31,0',     # GNSS - Turn on raw GNSS output, all constellations, to the NMEA port
+            "AT+QGPS=1",                         # Power on the GNSS functionality.
         ],
         
         # One-time query commands for static modem information
         "modem_info": [
-            "AT+CGMI",        # Query module manufacturer
-            "AT+CGMM",        # Query module model
-            "AT+CGMR",        # Query module revision
-            "AT+CGSN",        # Query module serial number
-            "AT+CICCID",      # Query SIM ICCID
-            "AT+CIMI",        # Query SIM IMSI
-            "AT#GETFWEXT",    # Get the full list of MBNs and versions
-            "AT#GETFWVER",    # Get the current MBN version
-            "AT#GETFW?",      # Get the active carrier
+            "AT+CGMI",     					# Query module manufacturer
+            "AT+CGMM",        				# Query module model
+            "AT+CGMR",        				# Query module revision
+            "AT+CGSN",        				# Query module serial number
+            "AT+CICCID",      				# Query SIM ICCID
+            "AT+CIMI",        				# Query SIM IMSI
+            'AT+QMBNCFG="List"',    	    # Get the full list of MBNs and versions:
         ],
         
         # One-time query commands for GPS configuration
-        "gps_config": [
-            "AT$GPSP?",       # GPS - Power - Check
-            "AT$GPSNMUN?",    # GPS - Check NMEA stream status
-            "AT$GPSNMUNEX?",  # GPS - Check NMEA extended data configuration
-            "AT$AGPSEN?",     # GPS - Check GPS position mode
-            "AT$GNSSCONF?",   # GPS - Check GNSS constellation configuration
-            "AT$GPSANTPORT?", # GPS - Check antenna port configuration
+        "gnss_info": [
+            "AT+QGPS?",						# GNSS - Power - Check
+            'AT+QGPSCFG="outport"',			# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="nmeasrc"',			# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="gpsnmeatype"',		# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="glonassnmeatype"',	# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="galileonmeatype"',	# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="beidounmeatype"',	# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="gsvextnmeatype"',	# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="gnssconfig"',		# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="autogps"',			# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="agpsposmode"',		# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="fixfreq"',			# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="1pps"',			# GNSS - Check all of the things we set above
+            'AT+QGPSCFG="gnssrawdata"',		# GNSS - Check all of the things we set above
         ],
         
         # One-time query commands for network configuration
         "network_config": [
-            "AT#BND?",        # Read configured LTE bands
-            "AT+CPOL?",       # Get the Preferred Operator List from the SIM
-            "AT+CPLS?",       # Get the list of preferred PLMNs in the SIM
-            "AT+CPLS=?",      # Get the supported list of PLMNs in the SIM
-            "AT+COPS=3,0",    # Set operator format to long alphanumeric
+            "AT+CTZU?",						# Read Automatic Time Zone Update configuration
+            'AT+QCFG="band"',				# Read configured LTE bands
+            'AT+QCFG="NWSCANMODE"',			# Check network scan mode (RAT limitations)
+            'AT+QOPSCFG="scancontrol"',		# Check what bands are set to be scanned 
+            'AT+QNWLOCK="common/lte"',		# Check if there are any LTE network locking settings
+            'AT+QNWLOCK="common/4g"',		# Check if there are any 4g network locking settings
+            'AT+QFPLMNCFG="list"',			# Check FPMLN List
+            "AT+CIND=?",					# Enumerate what will be returned by the "AT+CIND?" command 
         ],
         
         # Loop commands that run frequently
         "fast_loop": [
-            "AT+CSQ",         # Signal quality
-            "AT+CREG?",       # GSM network registration
-            "AT+CGREG?",      # UMTS network registration
-            "AT+CEREG?",      # LTE network registration
-            "AT+CESQ",        # Extended signal quality indicators
-            "AT#RFSTS",       # Current network status
+            "AT+CSQ",                # Signal quality
+            "AT+CREG?",              # GSM network registration
+            "AT+CGREG?",             # UMTS network registration
+            "AT+CEREG?",             # LTE network registration
+            "AT+QCSQ",               # LTE signal quality
+            "AT+QNETINFO=2,1",       # Query rsssnr of LTE network
+            "AT+QNWINFO",            # LTE network information
+            "AT+QSPN",               # Service provider name
+            "AT+CIND?",              # Command of Control Instructions
+            'AT+QENG="servingcell"', # Query the information of serving cell
         ],
         
         # Loop commands that run at medium frequency
         "medium_loop": [
-            "AT+CFUN?",       # Read the current setting of <fun>
-            "AT+CGATT?",      # Read the current service state
-            "AT+COPS?",       # Query the current network operator
+            "AT+CFUN?",       # How much <fun> are we having?
+            "AT+CGATT?",          # Read the current service state
+            "AT+COPS?",           # Query the current network operator
+            "AT+QNETINFO=2,4",    # Query DRX of LTE network
+            'AT+QENG="neighbourcell"', # Query the information of neighbour cells
         ],
         
         # Loop commands that run less frequently
         "slow_loop": [
-            "AT+CCLK?",       # Read the real-time clock
-            "AT$GPSACP?",     # Get Acquired Position
-            "AT$GETLOCATION", # Get the current location
-            "AT$GPSQOS?",     # Get the current GPS Quality of signal
+            "AT+QNETINFO=2,2",                # Query timingadvance of LTE network
+            "AT+CCLK?",                       # Read the real-time clock
+            "AT+QLTS",                        # Obtain the Latest Time Synchronized Through Network
+            'AT+QGPSGNMEA="GGA"',             # Get one GGA NMEA sentance
+            'AT+QGPSGNMEA="RMC"',             # Get one RMC NMEA sentance
+            'AT+QGPSGNMEA="GSV"',             # Get one GSV NMEA sentance
+            'AT+QGPSGNMEA="GSA"',             # Get one GSA NMEA sentance
+            'AT+QGPSGNMEA="VTG"',             # Get one VTG NMEA sentance
+            'AT+QGPSGNMEA="GNS"',             # Get one GNS NMEA sentance
+            'AT+QGPSCFG="estimation_error"',  # Get the current GNSS Quality of signal
         ]
     }
     
@@ -159,7 +191,7 @@ def collect_modem_info(modem: ModemCommunicator, parser: ModemResponseParser, lo
             logger.log_warning(f"Failed to execute modem info command: {cmd}")
     
     # Run GPS configuration queries
-    for cmd in commands["gps_config"]:
+    for cmd in commands["gnss_info"]:
         command_count += 1
         success, response = modem.execute_command(cmd)
         if success:
