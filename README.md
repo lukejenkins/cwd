@@ -178,16 +178,18 @@ These commands are run continously in a loop. They are used to gather informatio
 
 ```plaintext
 
-# Read the current setting of <fun>.
-AT+CFUN? 
-
 # Read the real-time clock
 AT+CCLK?
+
+# Read the current setting of <fun>.
+AT+CFUN? 
 
 # Obtain the Latest Time Synchronized Through Network
 AT+QLTS
 
 # Get the current location
+# +CME ERROR: Operation not supported
+#FIXME
 AT+QGPSLOC
 
 # Get the current GNSS Quality of signal
@@ -233,6 +235,8 @@ AT+QSPN
 AT+QNETINFO=2,1
 
 # Query timingadvance of LTE network
+# This command causes the output to lag. Consider running it less often.
+#FIXME
 AT+QNETINFO=2,2
 
 # Query DRX of LTE network
@@ -252,7 +256,6 @@ AT+QENG="servingcell"
 
 # Query the information of neighbour cells
 AT+QENG="neighbourcell"
-
 
 #  Command of Control Instructions
 # +CIND: ("battchg",(0-5)),("signal",(0-5)),("service",(0-1)),("call",(0-1)),("roam",(0-1)),("smsfull",(0-1)),("GPRS coverage",(0-1)),("callsetup",(0-3))
