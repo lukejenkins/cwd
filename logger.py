@@ -43,7 +43,8 @@ class ModemLogger:
         self.raw_log_file = os.path.join(log_dir, f"{timestamp}_cwd_raw.log")
         self.raw_log = open(self.raw_log_file, 'w')
         
-        self.logger.info(f"Logging initialized. Raw log: {self.raw_log_file}")
+        self.logger.info(f"Logging initialized. Main log: {log_file}")
+        self.logger.info(f"Raw log: {self.raw_log_file}")
     
     def log_command(self, command: str) -> None:
         """

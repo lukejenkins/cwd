@@ -32,6 +32,8 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+CMEE=2",                         # Set the error reporting to verbose
             "AT+CTZU=3",                         # Enable automatic time zone update via NITZ and update LOCAL time to RTC
             'AT+QFPLMNCFG="Delete","all"',       # Clear the FPLMN list
+            'AT+QOPSCFG="displayrssi",1',        # Enable RSSI display in AT+QOPS scan
+            'AT+QOPSCFG="displaybw",1',          # Enable bandwidth display in AT+QOPS scan
             "AT+QGPSEND",                        # Power off the GNSS functionality so we can configure it
             'AT+QGPSCFG="outport","usbnmea"',    # GNSS - Set the output port to "USB NMEA", one of the TTYs presented to the host OS
             'AT+QGPSCFG="nmeasrc",1',            # GNSS - Enable use of the AT+QGPSGNMEA command to output NMEA sentences to the AT port
@@ -55,7 +57,9 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+CGMM",        				# Query module model
             "AT+CGMR",        				# Query module revision
             "AT+CGSN",        				# Query module serial number
-            # "AT+CICCID",      				# Query SIM ICCID #FIXME
+            "AT+CPIN?",      				# Query SIM PIN status
+            "AT+QINISTAT",      			# Query SIM status
+            "AT+QCCID",      				# Query SIM ICCID
             "AT+CIMI",        				# Query SIM IMSI
             'AT+QMBNCFG="List"',    	    # Get the full list of MBNs and versions:
         ],
@@ -118,6 +122,7 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+QNETINFO=2,2",                # Query timingadvance of LTE network
             "AT+CCLK?",                       # Read the real-time clock
             "AT+QLTS",                        # Obtain the Latest Time Synchronized Through Network
+            "AT+QOPS",                        # List the available network information of operators for all neighbor cells #SuperSlow
             'AT+QGPSGNMEA="GGA"',             # Get one GGA NMEA sentance
             'AT+QGPSGNMEA="RMC"',             # Get one RMC NMEA sentance
             'AT+QGPSGNMEA="GSV"',             # Get one GSV NMEA sentance
@@ -262,7 +267,8 @@ def main():
         config["CSV_DIR"], 
         config["CSV_FILENAME"],
         config["JSON_DIR"],
-        config["JSON_FILENAME"]
+        config["JSON_FILENAME"],
+        logger
     )
     
     # Set up signal handling for graceful exit

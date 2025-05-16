@@ -905,7 +905,7 @@ def parse_cell_info(command: str, response: str) -> Dict[str, Any]:
 class ModemResponseParser:
     """Handles parsing of modem responses and saves data to various formats."""
     
-    def __init__(self, csv_dir: str, csv_filename: str, json_dir: str = None, json_filename: str = None):
+    def __init__(self, csv_dir: str, csv_filename: str, json_dir: str = None, json_filename: str = None, logger = None):
         """
         Initialize the parser.
         
@@ -914,11 +914,13 @@ class ModemResponseParser:
             csv_filename: Base filename for CSV output
             json_dir: Directory for JSON output, defaults to csv_dir if None
             json_filename: Base filename for JSON output, defaults to "modem_info.json" if None
+            logger: Logger instance for logging messages
         """
         self.csv_dir = csv_dir
         self.csv_filename = csv_filename
         self.json_dir = json_dir if json_dir else csv_dir
         self.json_filename = json_filename if json_filename else "modem_info.json"
+        self.logger = logger
         
         # Create output directories if they don't exist
         os.makedirs(csv_dir, exist_ok=True)
@@ -954,6 +956,11 @@ class ModemResponseParser:
         # Initialize JSON file with empty object
         with open(self.json_path, 'w') as f:
             json.dump({}, f, indent=2)
+            
+        # Log file creation if logger is available
+        if self.logger:
+            self.logger.log_info(f"Cell data CSV: {self.cell_csv_path}")
+            self.logger.log_info(f"Modem info JSON: {self.json_path}")
     
     def parse_modem_info(self, command: str, response: str) -> Dict[str, Any]:
         """
