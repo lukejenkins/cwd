@@ -55,7 +55,7 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+CGMM",        				# Query module model
             "AT+CGMR",        				# Query module revision
             "AT+CGSN",        				# Query module serial number
-            "AT+CICCID",      				# Query SIM ICCID
+            # "AT+CICCID",      				# Query SIM ICCID #FIXME
             "AT+CIMI",        				# Query SIM IMSI
             'AT+QMBNCFG="List"',    	    # Get the full list of MBNs and versions:
         ],

@@ -25,7 +25,7 @@ class ModemLogger:
         
         # Create a timestamp for the log file name
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = os.path.join(log_dir, f"cwd_{timestamp}.log")
+        log_file = os.path.join(log_dir, f"{timestamp}_cwd.log")
         
         # Configure logging
         log_level_num = getattr(logging, log_level.upper())
@@ -40,7 +40,7 @@ class ModemLogger:
         self.logger = logging.getLogger("cwd")
         
         # Create raw communication log file
-        self.raw_log_file = os.path.join(log_dir, f"cwd_raw_{timestamp}.log")
+        self.raw_log_file = os.path.join(log_dir, f"{timestamp}_cwd_raw.log")
         self.raw_log = open(self.raw_log_file, 'w')
         
         self.logger.info(f"Logging initialized. Raw log: {self.raw_log_file}")
