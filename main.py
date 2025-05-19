@@ -122,7 +122,7 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+QNETINFO=2,2",                # Query timingadvance of LTE network
             "AT+CCLK?",                       # Read the real-time clock
             "AT+QLTS",                        # Obtain the Latest Time Synchronized Through Network
-            "AT+QOPS",                        # List the available network information of operators for all neighbor cells #SuperSlow
+            #"AT+QOPS",                        # List the available network information of operators for all neighbor cells #SuperSlow
             'AT+QGPSGNMEA="GGA"',             # Get one GGA NMEA sentance
             'AT+QGPSGNMEA="RMC"',             # Get one RMC NMEA sentance
             'AT+QGPSGNMEA="GSV"',             # Get one GSV NMEA sentance
