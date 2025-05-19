@@ -286,3 +286,122 @@ AT+CCLK?
   - The pyserial library provides a simple interface for reading and writing data to the serial port.
 - [python-dotenv](https://pypi.org/project/python-dotenv/)
   - The dotenv library is used to load environment variables from a .env file into the Python environment.
+
+## Usage
+
+### Command-Line Interface
+
+Cell War Driver provides a comprehensive command-line interface with various options for customizing its behavior. You can run the program using the `./cwd` command followed by options:
+
+```bash
+./cwd [options]
+```
+
+#### Basic Examples
+
+```bash
+# Run with default settings
+./cwd
+
+# Specify a different port
+./cwd --port /dev/ttyUSB2
+
+# Test connection to modem
+./cwd --test-connection
+
+# Scan for available serial ports
+./cwd --scan-ports
+
+# Show more detailed logs
+./cwd --log-level DEBUG
+
+# Export configuration to .env file
+./cwd --export-config my_config.env
+
+# Monitor signal strength in real-time
+./cwd --signal-monitor
+```
+
+#### Complete Command-Line Reference
+
+##### Basic Options
+
+- `--help` - Show the help message and exit
+- `--version` - Show the program version and exit
+
+##### Serial Connection Settings
+
+- `--port PORT` - Serial port for the modem (default: /dev/ttyUSB0)
+- `--baudrate BAUDRATE` - Baud rate for serial communication (default: 115200)
+- `--timeout TIMEOUT` - Timeout for serial communication in seconds (default: 1.0)
+- `--scan-ports` - Scan for available serial ports and exit
+
+##### Logging Settings
+
+- `--log-dir DIR` - Directory for log files (default: output)
+- `--log-level LEVEL` - Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+##### Command Execution Settings
+
+- `--command-delay DELAY` - Delay between commands in seconds (default: 0.5)
+- `--retry-count COUNT` - Number of retries for failed commands (default: 3)
+
+##### Output Settings
+
+- `--csv-dir DIR` - Directory for CSV output (default: output)
+- `--csv-filename NAME` - Base filename for cell data CSV (default: cell_data.csv)
+- `--json-dir DIR` - Directory for JSON output (default: output)
+- `--json-filename NAME` - Base filename for modem info JSON (default: modem_info.json)
+
+##### Database Settings
+
+- `--use-database` - Enable database storage
+- `--db-type TYPE` - Database type (sqlite only for now) (default: sqlite)
+- `--db-path PATH` - Path to the database file (default: output/cell_data.sqlite)
+
+##### Command Interval Settings
+
+- `--fast-interval SECS` - Fast command loop interval in seconds (default: 5.0)
+- `--medium-interval SECS` - Medium command loop interval in seconds (default: 30.0)
+- `--slow-interval SECS` - Slow command loop interval in seconds (default: 300.0)
+
+##### Utility Options
+
+- `--list-commands` - Display all AT commands used by the program and exit
+- `--test-connection` - Test the modem connection and exit
+- `--export-config FILE` - Export current configuration to a .env file and exit
+- `--show-env` - Show all environment variables and their values
+- `--list-modems` - List all supported modem types and exit
+- `--modem-info` - Show detailed information about the connected modem and exit
+- `--setup-only` - Run only the modem setup commands and exit
+- `--signal-monitor` - Monitor signal strength in real-time (simplified mode)
+
+### Using Environment Variables
+
+All configuration options can also be set using environment variables or a `.env` file in the program directory. The following environment variables are supported:
+
+- `PORT` - Serial port for the modem
+- `BAUDRATE` - Baud rate for serial communication
+- `TIMEOUT` - Timeout for serial communication in seconds
+- `LOG_DIR` - Directory for log files
+- `LOG_LEVEL` - Logging level
+- `COMMAND_DELAY` - Delay between commands in seconds
+- `RETRY_COUNT` - Number of retries for failed commands
+- `CSV_DIR` - Directory for CSV output
+- `CSV_FILENAME` - Base filename for cell data CSV
+- `JSON_DIR` - Directory for JSON output
+- `JSON_FILENAME` - Base filename for modem info JSON
+- `USE_DATABASE` - Enable database storage (true/false)
+- `DB_TYPE` - Database type
+- `DB_PATH` - Path to the database file
+- `FAST_COMMAND_INTERVAL` - Fast command loop interval in seconds
+- `MEDIUM_COMMAND_INTERVAL` - Medium command loop interval in seconds
+- `SLOW_COMMAND_INTERVAL` - Slow command loop interval in seconds
+
+You can export settings to a `.env` file using the `--export-config` option:
+
+```bash
+./cwd --export-config my_config.env
+```
+
+Then edit the file as needed and place it in the same directory as the program.
