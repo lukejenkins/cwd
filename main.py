@@ -454,6 +454,12 @@ def test_modem_connection(config: Dict[str, Any]) -> int:
         
         logger.log_info(f"Successfully connected to modem on {config['PORT']}")
         
+        # Verify the modem is a Quectel EG25
+        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
+        if not is_quectel_eg25:
+            logger.log_error("Modem verification failed. This program is designed for Quectel EG25 modems.")
+            logger.log_warning("Test continuing but some commands may not work properly.")
+        
         # Basic test commands with friendly descriptions
         test_commands = [
             ("AT", "Basic connectivity test"),
@@ -816,6 +822,12 @@ def monitor_signal_strength(config: Dict[str, Any]) -> int:
             return 1
         
         logger.log_info("Connected to modem. Monitoring signal strength (Ctrl+C to exit)...")
+        
+        # Verify the modem is a Quectel EG25
+        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
+        if not is_quectel_eg25:
+            logger.log_warning("Modem verification failed. Signal monitoring may not work properly.")
+        
         print("\nSignal Monitor - Cell War Driver")
         print("===============================")
         print("Time             | Signal (dBm) | Quality | Technology | Operator")
@@ -893,6 +905,15 @@ def setup_modem_only(config: Dict[str, Any]) -> int:
         
         logger.log_info("Connected to modem. Running setup commands...")
         
+        # Verify the modem is a Quectel EG25
+        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
+        if not is_quectel_eg25:
+            logger.log_error("Modem verification failed. Setup commands are specific to Quectel EG25 modems.")
+            logger.log_error("Cannot proceed with setup. Please check your hardware.")
+            modem.disconnect()
+            logger.close()
+            return 1
+        
         # Get the setup commands
         commands = setup_modem_commands()
         
@@ -963,6 +984,11 @@ def show_detailed_modem_info(config: Dict[str, Any]) -> int:
             return 1
         
         logger.log_info("Connected to modem. Getting detailed information...")
+        
+        # Verify the modem is a Quectel EG25
+        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
+        if not is_quectel_eg25:
+            logger.log_warning("Modem verification failed. Some commands may not work properly.")
         
         # Commands to retrieve detailed information
         info_commands = [
@@ -1051,6 +1077,54 @@ def show_detailed_modem_info(config: Dict[str, Any]) -> int:
         # Clean up
         modem.disconnect()
         logger.close()
+
+
+def verify_quectel_eg25_modem(modem: ModemCommunicator, logger: ModemLogger) -> bool:
+    """
+    Verify that the connected modem is a Quectel EG25.
+    
+    Args:
+        modem: The modem communicator instance
+        logger: The logger instance
+    
+    Returns:
+        bool: True if the modem is a Quectel EG25, False otherwise
+    """
+    logger.log_info("Verifying modem type...")
+    
+    # Check manufacturer
+    success, manufacturer_response = modem.execute_command("AT+CGMI")
+    if not success:
+        logger.log_error("Failed to get modem manufacturer.")
+        return False
+    
+    # Clean up the response
+    manufacturer = manufacturer_response.replace("AT+CGMI", "").replace("OK", "").strip()
+    if "+CGMI:" in manufacturer_response:
+        manufacturer = manufacturer.split("+CGMI:")[1].strip()
+    
+    if "QUECTEL" not in manufacturer.upper():
+        logger.log_error(f"Unsupported modem manufacturer: {manufacturer}. This program requires a Quectel modem.")
+        return False
+    
+    # Check model
+    success, model_response = modem.execute_command("AT+CGMM")
+    if not success:
+        logger.log_error("Failed to get modem model.")
+        return False
+    
+    # Clean up the response
+    model = model_response.replace("AT+CGMM", "").replace("OK", "").strip()
+    if "+CGMM:" in model_response:
+        model = model.split("+CGMM:")[1].strip()
+    
+    if not (model.upper().startswith("EG25") or "EG25" in model.upper()):
+        logger.log_error(f"Unsupported modem model: {model}. This program requires an EG25 modem.")
+        logger.log_info("Supported models: EG25-G, EG25-E, EG25-AUT, etc.")
+        return False
+    
+    logger.log_info(f"Verified modem: Quectel {model}")
+    return True
 
 
 def main():
@@ -1192,6 +1266,14 @@ def main():
             logger.log_error("Failed to connect to modem. Exiting.")
             return 1
         
+        # Verify that the modem is a Quectel EG25
+        if not verify_quectel_eg25_modem(modem, logger):
+            logger.log_error("Modem verification failed. This program requires a Quectel EG25 modem.")
+            logger.log_error("Please check your hardware and connection settings.")
+            modem.disconnect()
+            logger.close()
+            return 1
+        
         # Set up the modem
         if not modem_setup(modem, logger):
             logger.log_error("Failed to set up modem. Continuing with limited functionality.")
@@ -1199,6 +1281,11 @@ def main():
         # Collect static modem information
         if not collect_modem_info(modem, parser, logger):
             logger.log_error("Failed to collect modem information. Continuing with limited functionality.")
+        
+        # Verify that the modem is a Quectel EG25
+        if not verify_quectel_eg25_modem(modem, logger):
+            logger.log_error("Modem verification failed. This program requires a Quectel EG25 modem.")
+            return 1
         
         # Main loop for gathering cell information
         logger.log_info("Starting main monitoring loop...")
