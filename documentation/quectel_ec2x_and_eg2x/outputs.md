@@ -15,7 +15,7 @@ Revision: EG25GGBR07A08M2G
 ### AT+QGMR
 
 ```plaintext
-EG25GGBR07A08M2G_30.203.30.203
+EG25GGBR07A08M2G_A0.301.A0.301
 ```
 
 ### AT+QMBNCFG=?
@@ -35,28 +35,31 @@ EG25GGBR07A08M2G_30.203.30.203
 ```plaintext
 +QMBNCFG: "List",0,0,0,"ROW_Generic_3GPP",0x0501081F,202307241
 +QMBNCFG: "List",1,0,0,"VoLTE-ATT",0x0501033C,202203251
-+QMBNCFG: "List",2,0,0,"hVoLTE-Verizon",0x05010141,202302081
-+QMBNCFG: "List",3,0,0,"Sprint-VoLTE",0x05010205,202010201
-+QMBNCFG: "List",4,1,1,"Commercial-TMO_VoLTE",0x05010505,202301051
-+QMBNCFG: "List",5,0,0,"Telus-Commercial_DO",0x0580F601,202105061
-+QMBNCFG: "List",6,0,0,"Commercial-SBM",0x05011C18,202303021
-+QMBNCFG: "List",7,0,0,"Commercial-DT",0x05011F1C,202310161
-+QMBNCFG: "List",8,0,0,"Reliance_OpnMkt",0x05011B38,202003251
-+QMBNCFG: "List",9,0,0,"TF_Germany_VoLTE",0x05010C1B,202004151
-+QMBNCFG: "List",10,0,0,"TF_Spain_VoLTE",0x05010CFA,202306211
-+QMBNCFG: "List",11,0,0,"Volte_OpenMkt-Commercial-CMCC",0x05012071,202308171
-+QMBNCFG: "List",12,0,0,"VoLTE_OPNMKT_CT",0x050113FC,202307101
-+QMBNCFG: "List",13,0,0,"CU-VoLTE",0x05011508,202212271
-+QMBNCFG: "List",14,0,0,"Telstra-Commercial_VoLTE",0x0580079E,202310251
-+QMBNCFG: "List",15,0,0,"Commercial-KDDI",0x0501071D,202305251
-+QMBNCFG: "List",16,0,0,"Commercial-DCM",0x05010D17,202309071
-+QMBNCFG: "List",17,0,0,"Commercial-SKT",0x05012715,202212101
-+QMBNCFG: "List",18,0,0,"Commercial-KT",0x05012C0D,202211101
-+QMBNCFG: "List",19,0,0,"Commercial-LGU",0x05012626,202301171
-+QMBNCFG: "List",20,0,0,"Commercial-USCC",0x0504FC40,202203021
-+QMBNCFG: "List",21,0,0,"Optus-Commercial_VoLTE",0x05800CA2,201910241
-+QMBNCFG: "List",22,0,0,"STC_Saudi_VoLTE",0x0501FE01,201912231
-+QMBNCFG: "List",23,0,0,"Commercial-Rogers",0x05018821,202202091
++QMBNCFG: "List",2,0,0,"hVoLTE-Verizon",0x05010141,202501101
++QMBNCFG: "List",3,0,0,"Sprint-VoLTE",0x05010205,202406111
++QMBNCFG: "List",4,1,1,"Commercial-TMO_VoLTE",0x05010505,202503071
++QMBNCFG: "List",5,0,0,"Telus-Commercial_VoLTE",0x05800C43,202503071
++QMBNCFG: "List",6,0,0,"Telus-Consumer_VoLTE",0x0580F801,202105061
++QMBNCFG: "List",7,0,0,"Commercial-SBM",0x05011C18,202503271
++QMBNCFG: "List",8,0,0,"Commercial-DT",0x05011F1C,202406011
++QMBNCFG: "List",9,0,0,"Reliance_OpnMkt",0x05011B38,202003251
++QMBNCFG: "List",10,0,0,"TF_Germany_VoLTE",0x05010C1B,202402061
++QMBNCFG: "List",11,0,0,"TF_Spain_VoLTE",0x05010CFA,202402061
++QMBNCFG: "List",12,0,0,"Volte_OpenMkt-Commercial-CMCC",0x05012071,202408261
++QMBNCFG: "List",13,0,0,"VoLTE_OPNMKT_CT",0x050113FC,202402281
++QMBNCFG: "List",14,0,0,"CU-VoLTE",0x05011508,202212271
++QMBNCFG: "List",15,0,0,"Telstra-Commercial_VoLTE",0x0580079E,202312281
++QMBNCFG: "List",16,0,0,"Commercial-KDDI",0x0501071D,202504021
++QMBNCFG: "List",17,0,0,"Commercial-DCM",0x05010D17,202309071
++QMBNCFG: "List",18,0,0,"Commercial-SKT",0x05012715,202409111
++QMBNCFG: "List",19,0,0,"Commercial-KT",0x05012C0D,202211101
++QMBNCFG: "List",20,0,0,"Commercial-LGU",0x05012626,202502171
++QMBNCFG: "List",21,0,0,"Commercial-USCC",0x0504FC40,202203021
++QMBNCFG: "List",22,0,0,"Optus-Commercial_VoLTE",0x05800CA2,201910241
++QMBNCFG: "List",23,0,0,"STC_Saudi_VoLTE",0x0501FE01,201912231
++QMBNCFG: "List",24,0,0,"Commercial-Rogers",0x05018821,202202091
++QMBNCFG: "List",25,0,0,"Spark_NewZealand_VoLTE",0x0580EF01,202410281
++QMBNCFG: "List",26,0,0,"UK_Vodafone_IoT",0x0580FA01,202409061
 ```
 
 ### AT+QCFG="band"
@@ -162,7 +165,7 @@ EG25GGBR07A08M2G_30.203.30.203
 +QCFG: "efratctl",(0,1)
 +QCFG: "tdd/config",(0-6),(0-8)
 +QCFG: "plmn/addinfbdn",(0,1)
-+QCFG: "hplmn/search_timer",(0,71582)
++QCFG: "hplmn/search_timer",(0-71582)
 +QCFG: "Feature_Switch_Flag",(0,1),(0x01 -- 0xFFFFFFFF)
 +QCFG: "icf",(0-3),(0-3),(0-3)
 +QCFG: "dhcppktfltr",(0,1)
@@ -213,6 +216,9 @@ EG25GGBR07A08M2G_30.203.30.203
 +QCFG: "call_profile",(0-16)
 +QCFG: "mwictl",(0,1)
 +QCFG: "clat",(0,1),(0,1),<prefix>,(0,32,40,48,56,64,96),<fqdn>,(0,1),(0,1,2,4,8),(0,1),(0,1),(0,1,2),(0,1,2)
++QCFG: "oem_climax",(1)
++QCFG: "map_rej_cause7_to_cause14",(0,1)
++QCFG: "frhrcodec",(0-7)
 ```
 
 ### AT+QAUDCFG=?
@@ -233,6 +239,7 @@ EG25GGBR07A08M2G_30.203.30.203
 +QAUDCFG: "es8311/dlgain",(0-255)
 +QAUDCFG: "es8311/ulgain",(0-255)
 +QAUDCFG: "alc5616e/dlgain",(0-59367)
++QAUDCFG: "slictype",(0-1)
 ```
 
 ### AT+QGPSCFG=?
@@ -291,6 +298,9 @@ EG25GGBR07A08M2G_30.203.30.203
 +QWIFICFG: "calibration"
 +QWIFICFG: "datarate",(AP,STA)[, idx]
 +QWIFICFG: "traffictransf",(AP,STA)[,idx]
++QWIFICFG: "enablecfg",(0,1)
++QWIFICFG: "sta_ip"
++QWIFICFG: "bandcapability",(0,1,2)
 ```
 
 ### AT+QFTPCFG=?
@@ -321,6 +331,7 @@ EG25GGBR07A08M2G_30.203.30.203
 +QLWCFG: "nettype",(0-2)
 +QLWCFG: "power_loss",(0,1)
 +QLWCFG: "testmode",(bootstrap_serverURL)
++QLWCFG: "4gc3_apn_restore",(0,1)
 ```
 
 ### AT+QSMTPCFG=?
@@ -355,6 +366,7 @@ EG25GGBR07A08M2G_30.203.30.203
 +QSSLCFG: "session_cache",(0-5),(0,1)
 +QSSLCFG: "alpn",(0-5),<protocolname>
 +QSSLCFG: "renegotiation",(0-5),(0,1)
++QSSLCFG: "ignoreprivkey",(0-5),(0,1)
 +QSSLCFG: "ignoremulticertchainverify",(0-5),(0,1)
 +QSSLCFG: "ignoreinvalidcertsign",(0-5),(0,1)
 +QSSLCFG: "ignorecertitem",(0-5),(0-1048575)
@@ -366,3 +378,28 @@ EG25GGBR07A08M2G_30.203.30.203
 +QNWCFG: "rej_cause_7_mapping",(0,1)
 +QNWCFG: "reject_cause",(0,1)
 ```
+
+### AT+QICFG=?
+
+```plaintext
++QICFG: "transpktsize",(1-1460)
++QICFG: "transwaittm",(0-20)
++QICFG: "dataformat",(0,1),(0,1)
++QICFG: "viewmode",(0,1)
++QICFG: "tcp/retranscfg",(3-20),(5-1000)
++QICFG: "dns/cache",(0,1)
++QICFG: "qisend/timeout",(0-3600)
++QICFG: "passiveclosed",(0,1)
++QICFG: "udp/readmode",(0,1)
++QICFG: "udp/sendmode",(0,1)
++QICFG: "tcp/accept",(0,1)
++QICFG: "recvind",(0,1)
++QICFG: "tcp/keepalive",(0,1),(1-120),(25-100),(3-10)
++QICFG: "recv/buffersize",(10240-524288)
++QICFG: "window/scale",(0-1)
++QICFG: "send/buffersize",(1460-10240)
++QICFG: "send/auto",(0-11),(20-86400),<msg_auto>
++QICFG: "recv/ignore",(0-11),<msg_ignore>
++QICFG: "wakeup/data",(0-11),<wakeup_data>
+```
+
