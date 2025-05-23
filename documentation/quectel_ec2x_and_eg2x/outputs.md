@@ -238,7 +238,6 @@ EG25GGBR07A08M2G_30.203.30.203
 ### AT+QGPSCFG=?
 
 ```plaintext
-AT+QGPSCFG=?
 +QGPSCFG: "outport",("none","usbnmea","uartdebug")
 +QGPSCFG: "nmeasrc",(0,1)
 +QGPSCFG: "gpsnmeatype",(0-31)
@@ -264,4 +263,106 @@ AT+QGPSCFG=?
 +QGPSCFG: "assisdataupdcfg",(0,1),(0,1),(1,16),(0-3)
 +QGPSCFG: "xtratimeurccfg",(0,1)
 +QGPSCFG: "estimation_error"
+```
+
+### AT+QWIFICFG=?
+
+```plaintext
++QWIFICFG: "workmode",(0-3)
++QWIFICFG: "powerboot",(0,1)
++QWIFICFG: "ssid",(0-2),<ssid>
++QWIFICFG: "ssidhide",(0,1),(0,1)
++QWIFICFG: "maxsta",(0,1),(1-16)
++QWIFICFG: "channel",(0,1),(0,13,36,40,44,48,52,56,60,64,100,104,108,112,116,120,124,128,132,136,140,144,149,153,157,161,165,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184)
++QWIFICFG: "mode",(0,1),(0-5)
++QWIFICFG: "bandwidth",(0,1),<0-2>
++QWIFICFG: "auth",(0-2),(0-4)[,(0-2),<password>]
++QWIFICFG: "macacl",(0,1)(0-3)[,(0-2)][,<mac>]
++QWIFICFG: "cc",<country_code>
++QWIFICFG: "stainfo"
++QWIFICFG: "scan",[(0-1)]
++QWIFICFG: "scanresult"
++QWIFICFG: "stastatus"
++QWIFICFG: "bridgemode",(0,1)
++QWIFICFG: "dongle_mac"
++QWIFICFG: "speedlimit",[(0-100)]
++QWIFICFG: "version"
++QWIFICFG: "fc20_21",(0,1)
++QWIFICFG: "calibration"
++QWIFICFG: "datarate",(AP,STA)[, idx]
++QWIFICFG: "traffictransf",(AP,STA)[,idx]
+```
+
+### AT+QFTPCFG=?
+
+```plaintext
++QFTPCFG: "account",<username>,<password>
++QFTPCFG: "filetype",(0,1)
++QFTPCFG: "transmode",(0,1)
++QFTPCFG: "contextid",(1-16)
++QFTPCFG: "rsptimeout",(20-180)
++QFTPCFG: "ssltype",(0-2)
++QFTPCFG: "sslctxid",(0-5)
++QFTPCFG: "data_address",(0-2)
++QFTPCFG: "restenable",(0,1)
+```
+
+### AT+QLWCFG=?
+
+```plaintext
++QLWCFG: "security",(0-3),(1-65535),<server_addr>,(0,1),(0,3),<pskID>,<psk_key>
++QLWCFG: "server",(0-3),(1-86400),(1-86400),(1-86400),(1-86400),(0,1),("U","UQ","S","SQ","US","UQS")
++QLWCFG: "epname/mode",(3,6,7)
++QLWCFG: "startup",(0,1)
++QLWCFG: "urc",(0,1)
++QLWCFG: "lwm2m_enable",(0-18),(0-1)
++QLWCFG: "hostdevice",(0,1),<deviceID>,<manufacturer>,<model>,<sw_version>,<fw_version>,<hw_version>,<upgrade_time>
++QLWCFG: "reset"
++QLWCFG: "nettype",(0-2)
++QLWCFG: "power_loss",(0,1)
++QLWCFG: "testmode",(bootstrap_serverURL)
+```
+
+### AT+QSMTPCFG=?
+
+```plaintext
++QSMTPCFG: "account",<username>,<password>
++QSMTPCFG: "sender",<sender_name>,<sender_email>
++QSMTPCFG: "smtpserver",<srvaddr>,<srvport>
++QSMTPCFG: "contextid",(1-16)
++QSMTPCFG: "sslctxid",(0-5)
++QSMTPCFG: "ssltype",(0-2)
++QSMTPCFG: "bodyoriginal",(0,1)
+```
+
+### AT+QSSLCFG=?
+
+```plaintext
++QSSLCFG: "sslversion",(0-5),(0-4)
++QSSLCFG: "dtls",(0-5),(0,1)
++QSSLCFG: "dtlsversion",(0-5),(0,1)
++QSSLCFG: "ciphersuite",(0-5),(0X0035,0X002F,0X0005,0X000A,0X003D,0XC003,0XC004,0XC005,0XC008,0XC009,0XC00A,0XC012,0XC013,0XC014,0XC00D,0XC00E,0XC00F,0XC023,0XC024,0XC025,0XC026,0XC027,0XC028,0XC029,0XC02A,0XC02F,0XC030,0XFFFF)
++QSSLCFG: "cacert",(0-5),<cacertpath>
++QSSLCFG: "cacertex",(0-5),<cacertexpath>
++QSSLCFG: "clientcert",(0-5),<client_cert_path>
++QSSLCFG: "clientkey",(0-5),<client_key_path>,<key_pwd>
++QSSLCFG: "seclevel",(0-5),(0-2)
++QSSLCFG: "ignorelocaltime",(0-5),(0,1)
++QSSLCFG: "negotiatetime",(0-5),(10-300)
++QSSLCFG: "sni",(0-5),(0,1)
++QSSLCFG: "psk",(0-5),<identity>,<key>
++QSSLCFG: "closetimemode",(0-5),(0,1)
++QSSLCFG: "session_cache",(0-5),(0,1)
++QSSLCFG: "alpn",(0-5),<protocolname>
++QSSLCFG: "renegotiation",(0-5),(0,1)
++QSSLCFG: "ignoremulticertchainverify",(0-5),(0,1)
++QSSLCFG: "ignoreinvalidcertsign",(0-5),(0,1)
++QSSLCFG: "ignorecertitem",(0-5),(0-1048575)
+```
+
+### AT+QNWCFG=?
+
+```plaintext
++QNWCFG: "rej_cause_7_mapping",(0,1)
++QNWCFG: "reject_cause",(0,1)
 ```

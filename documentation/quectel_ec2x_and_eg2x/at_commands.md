@@ -163,6 +163,22 @@ The `AT+QCFG` command is a versatile command used for various module configurati
 
 **Note on `AT+QCFG`:** The `AT+QCFG` command has numerous sub-parameters for configuring various aspects of the module. The examples above are just a small selection. Refer to the "Quectel_EC2x&EG9x&EG2x-G&EM05_Series_QCFG_AT_Commands_Manual" (or similar specific QCFG manual if available) for a comprehensive list.
 
+## Unsorted Commands
+
+| Command        | Function                                                                 | Source Hint (Manual)          |
+|----------------|--------------------------------------------------------------------------|-------------------------------|
+| AT+QNVFR | Read NV items.                                                        | General AT Commands           |
+| AT+QNVR | Read NV items with a specific index.                                 | General AT Commands           |
+| AT+QNVFW | Write NV items.                                                       | General AT Commands           |
+| AT+QNVFD | Delete NV items.                                                     | General AT Commands           |
+| AT+QMBNCFG="select" | Show which MBN is currently selected.                          | General AT Commands           |
+| at+qnvfr="nv/item_files/Thin_UI/enable_thin_ui_cfg" | Check status of Thin UI. | General AT Commands           |
+| at+qnvfw="nv/item_files/Thin_UI/enable_thin_ui_cfg",<value> | Set status of Thin UI. | General AT Commands           |
+| at+qping=<ipaddr>[,<count>[,<size>]] | Ping a host.                                                   | General AT Commands           |
+| AT+QVOLTEDBG | Dump a ton of info.                                          | General AT Commands           |
+| AT+CIMI | Get the International Mobile Subscriber Identity (IMSI).       | General AT Commands           |
+
+
 ---
 
 **Disclaimer:**
