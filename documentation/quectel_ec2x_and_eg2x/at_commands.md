@@ -24,8 +24,127 @@ This document provides a sample list of AT commands supported by the Quectel EG2
 | AT+QPOWD=[<n>] | Power Off the Module.                                                    | General AT Commands           |
 | AT+IPR?        | Query current DTE-DCE baud rate.                                         | General AT Commands           |
 | AT+IPR=<rate>  | Set DTE-DCE baud rate.                                                   | General AT Commands           |
-| AT+QCFG="secbootstat" | Get whether secure boot is enabled.                               | General AT Commands / QCFG    |
 | AT+QFORMATUSRDATA | Format user data partition.                                           | General AT Commands / File    |
+
+## Configuration Commands (`AT+QCFG`)
+
+The `AT+QCFG` command is a versatile command used for various module configurations. It has many sub-parameters. Below are a few examples found:
+
+| Command        | Function                                                                 | Source Hint (Manual)          |
+|----------------|--------------------------------------------------------------------------|-------------------------------|
+| AT+QCFG="agps/string" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="airplanecontrol" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="amrcodec" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="apready" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ApRstLevel" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="band" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="bip/auth" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="bootup" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="call_control" | Control voice MO (Mobile Originated) and MT (Mobile Terminated) functions. | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="cdmaruim" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="cdmasms/cmtformat" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="cmux/urcport" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="codec/powsave" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="cops_no_mode_change" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="dhcppktfltr" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="disrplmn" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="divctl" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="diversity" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="efratctl" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ehrpd" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="eps/guti_enable" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="fast_dormancy" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="fast/poweroff" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="Feature_Switch_Flag" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="freezeband" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ftm/mbim" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="gprsattach" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="gpsweek" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="hsdpacat" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="hsupacat" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="icf" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ims" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="imsreg/iptype" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="iproute_enable" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="iprulectl" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="lanip" | Modify the range of LAN IP (e.g., for tethering/router mode).            | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="ledmode" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="lpm/dataind" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="lte/bandprior" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="lte/preferfre" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ltectcc/smsstorage" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ltesms/format" | Send SMS in 3GPP2 format only and receive SMS in 3GPP2/3GPP.    | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="mms_rec_control" | Control whether to save received MMS.                           | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="ModemRstLevel" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="msc" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="multi_ip_package" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="noauthcheck" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ntp" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="nwoptmz/acq" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="nwscanmode" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="nwscanmodeex" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="nwscanseq" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="oostimer" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="pcmclk" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="pdp/duplicatechk" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="plmn/addinfbdn" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="plmn/autoblock" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="poaccept" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ppp/sleep_ri" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ppp/termframe" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="ppp/v4v6" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="qcautoconnect" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="qmisync" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="qoos" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="rf/sar/gpioctl" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="risignaltype" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="roamservice" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="rrc" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="rrc/control" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="rssi" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sarcfg" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="secbootstat" | Get whether secure boot is enabled.                               | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="servicedomain" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sgsn" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sim/clk_freq" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sim/onchip" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sim/recovery" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="siminvalirecovery" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sleep/datactrl" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sleepind/level" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="sms_control" | Control SMS sending and reception.                                | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="SMS/ListMsgMap" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="spi/set" | Write a mark in rawdata to control initialization of SPI6/UART6.       | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="stkauto/setupmenutr" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="TCP/SendMode" | Configure TCP sending mode.                                      | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="tcp/windowsize" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="tdscsq" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="thermal/limit_rates" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="thermal/modem" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="thermal/txpwrlmt" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="tone/incoming" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc_cause_support" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc/cache" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc/delay" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc/ri/other" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc/ri/pin" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc/ri/ring" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urc/ri/smsincoming" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="urcport/sms" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="usage/apfs" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="usage/apmem" | Get device memory usage.                                          | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="usbcfg" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="usbee" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="usbid" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="usbmode" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="usbnet" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="voice_busytone" | Enable/disable busytone playback.                             | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+| AT+QCFG="volte/disable" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="vts/async" |  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual |
+| AT+QCFG="wakeupin/level" | Set the wakeup_in pin level.                                  | EC2x&EG2x&EG9x&EM05 Series QCFG AT Commands Manual    |
+
+**Note on `AT+QCFG`:** The `AT+QCFG` command has numerous sub-parameters for configuring various aspects of the module. The examples above are just a small selection. Refer to the "Quectel_EC2x&EG9x&EG2x-G&EM05_Series_QCFG_AT_Commands_Manual" (or similar specific QCFG manual if available) for a comprehensive list.
+
 
 ## SIM Card Commands
 
@@ -69,7 +188,6 @@ This document provides a sample list of AT commands supported by the Quectel EG2
 | AT+QIDEACT=[<contextID>] | Deactivate a PDP Context.                                     | General AT Commands (TCP/IP)  |
 | AT+QICFG="tcp/keepalive" | Configure whether to enable TCP keepalive function.            | General AT Commands / QCFG    |
 | AT+QIKALIVE    | Change to the minimum keepalive value.                                   | General AT Commands / QCFG    |
-| AT+QCFG="TCP/SendMode" | Configure TCP sending mode.                                      | General AT Commands / QCFG    |
 | AT+QSSLRECV    | Read the remaining SSL data.                                             | General AT Commands / QCFG    |
 | AT+QSSLCFG="alpn" | Set SSL ALPN (Application-Layer Protocol Negotiation).                | General AT Commands / QCFG    |
 
@@ -84,8 +202,7 @@ This document provides a sample list of AT commands supported by the Quectel EG2
 | AT+CMGR=<index>  | Read Message.                                                            | General AT Commands           |
 | AT+CMGD=<index>[,<delflag>] | Delete Message.                                             | General AT Commands           |
 | AT+CNMI=[<mode>[,<mt>[,<bm>[,<ds>[,<bfr>]]]]] | New Message Indications to TE.            | General AT Commands           |
-| AT+QCFG="ltesms/format" | Send SMS in 3GPP2 format only and receive SMS in 3GPP2/3GPP.    | General AT Commands / QCFG    |
-| AT+QCFG="sms_control" | Control SMS sending and reception.                                | General AT Commands / QCFG    |
+
 
 ## Voice Call Commands (Subset)
 
@@ -95,8 +212,7 @@ This document provides a sample list of AT commands supported by the Quectel EG2
 | ATH            | Hang up call.                                                            | General AT Commands           |
 | ATA            | Answer incoming call.                                                    | General AT Commands           |
 | AT+CLCC        | List Current Calls.                                                      | General AT Commands           |
-| AT+QCFG="call_control" | Control voice MO (Mobile Originated) and MT (Mobile Terminated) functions. | General AT Commands / QCFG |
-| AT+QCFG="voice_busytone" | Enable/disable busytone playback.                             | General AT Commands / QCFG    |
+
 
 ## File System Commands (from File AT Commands Manual)
 
@@ -147,21 +263,6 @@ This document provides a sample list of AT commands supported by the Quectel EG2
 | AT+QLBSCFG="contextid",<id> | Configure QuecLocator context ID.                          | General AT Commands / QCFG    |
 | AT+QLBSEX      | Enter cell parameter for positioning (QuecLocator).                      | General AT Commands / QCFG    |
 
-## Miscellaneous Configuration Commands (`AT+QCFG`)
-
-The `AT+QCFG` command is a versatile command used for various module configurations. It has many sub-parameters. Below are a few examples found:
-
-| Command        | Function                                                                 | Source Hint (Manual)          |
-|----------------|--------------------------------------------------------------------------|-------------------------------|
-| AT+QCFG="lanip" | Modify the range of LAN IP (e.g., for tethering/router mode).            | General AT Commands / QCFG    |
-| AT+QCFG="usage/apmem" | Get device memory usage.                                          | General AT Commands / QCFG    |
-| AT+QCFG="wakeupin/level" | Set the wakeup_in pin level.                                  | General AT Commands / QCFG    |
-| AT+QCFG="spi/set" | Write a mark in rawdata to control initialization of SPI6/UART6.       | General AT Commands / QCFG    |
-| AT+QWIFICFG="bridgemode" | Support Wi-Fi bridge mode (if Wi-Fi is a feature of the specific EG25 variant). | General AT Commands / QCFG |
-| AT+QCFG="mms_rec_control" | Control whether to save received MMS.                           | General AT Commands / QCFG    |
-| AT+QMTCFG="protocol/check" | Configure MQTT protocol check.                               | General AT Commands / QCFG    |
-
-**Note on `AT+QCFG`:** The `AT+QCFG` command has numerous sub-parameters for configuring various aspects of the module. The examples above are just a small selection. Refer to the "Quectel_EC2x&EG9x&EG2x-G&EM05_Series_QCFG_AT_Commands_Manual" (or similar specific QCFG manual if available) for a comprehensive list.
 
 ## Unsorted Commands
 
@@ -178,6 +279,8 @@ The `AT+QCFG` command is a versatile command used for various module configurati
 | AT+QVOLTEDBG | Dump a ton of info.                                          | General AT Commands           |
 | AT+CIMI | Get the International Mobile Subscriber Identity (IMSI).       | General AT Commands           |
 | at+QCPUSN? | Get the CPU serial number.                               | General AT Commands           |
+| AT+QWIFICFG="bridgemode" | Support Wi-Fi bridge mode (if Wi-Fi is a feature of the specific EG25 variant). | |
+| AT+QMTCFG="protocol/check" | Configure MQTT protocol check.                               |     |
 
 
 ---

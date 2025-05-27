@@ -142,6 +142,7 @@ def setup_modem_commands() -> Dict[str, List[str]]:
             "AT+CTZU?",						# Read Automatic Time Zone Update configuration
             'AT+QCFG="band"',				# Read configured LTE bands
             'AT+QCFG="NWSCANMODE"',			# Check network scan mode (RAT limitations)
+            'AT+QCFG="NWSCANMODEEX"',		# Check network scan mode (extended)
             'AT+QOPSCFG="scancontrol"',		# Check what bands are set to be scanned 
             'AT+QNWLOCK="common/lte"',		# Check if there are any LTE network locking settings
             'AT+QNWLOCK="common/4g"',		# Check if there are any 4g network locking settings
