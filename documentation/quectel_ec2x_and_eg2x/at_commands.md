@@ -177,6 +177,7 @@ The `AT+QCFG` command is a versatile command used for various module configurati
 | at+qping=<ipaddr>[,<count>[,<size>]] | Ping a host.                                                   | General AT Commands           |
 | AT+QVOLTEDBG | Dump a ton of info.                                          | General AT Commands           |
 | AT+CIMI | Get the International Mobile Subscriber Identity (IMSI).       | General AT Commands           |
+| at+QCPUSN? | Get the CPU serial number.                               | General AT Commands           |
 
 
 ---

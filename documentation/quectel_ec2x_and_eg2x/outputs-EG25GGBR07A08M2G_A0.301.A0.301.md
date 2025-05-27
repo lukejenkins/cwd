@@ -1,6 +1,6 @@
 # This file contains the outputs of various commands on various modules in this series
 
-Unless specified, all commands are from the same module and firmware version in the series of outputs. In particular I'm interested in the commands that provide a list of values to configure or set as these don't always get documented.
+All command outputs are from the same module and firmware version. In particular I'm interested in the commands that provide a list of values to configure or set as these don't always get documented.
 
 ## Quectel EG25-G
 
