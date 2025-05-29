@@ -286,3 +286,21 @@ Then run with your custom configuration:
 - **Configurability**: Easy to adjust settings via YAML file without changing code
 
 For detailed documentation on the smart configuration system, see [documentation/smart_configuration.md](documentation/smart_configuration.md).
+
+## Windows Support
+
+Cell War Driver now supports Windows with several convenient ways to run the program:
+
+1. **GUI Launcher**: A graphical interface for easy configuration and execution
+2. **Command Line**: Batch file for running from Command Prompt
+3. **PowerShell**: Native PowerShell script support
+
+For detailed Windows setup and usage instructions, see [documentation/windows_usage.md](documentation/windows_usage.md).
+
+### Quick Start for Windows
+
+1. Double-click `cwd_gui.bat` for the graphical interface
+2. Or run `cwd.bat --port COM3` from Command Prompt
+3. Or run `.\cwd.ps1 --port COM3` from PowerShell
+
+The Windows version supports all the same features as the Linux version.

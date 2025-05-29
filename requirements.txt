@@ -24,3 +24,6 @@ pandas>=1.4.0
 # Optional dependencies
 # For database support (if enabled with --use-database)
 sqlalchemy>=1.4.0
+
+# For Windows GUI launcher
+# tkinter is typically bundled with Python installation
