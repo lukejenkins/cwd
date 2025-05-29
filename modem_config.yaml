@@ -9,7 +9,6 @@ basic:
 
 # Network configuration
 network:
-  clear_forbidden_plmn: true      # AT+QFPLMNCFG="Delete","all"
   display_rssi_in_scan: 1         # AT+QOPSCFG="displayrssi",1
   display_bandwidth_in_scan: 1    # AT+QOPSCFG="displaybw",1
 
@@ -35,4 +34,7 @@ gnss:
 #advanced:
 #  band_configuration: null       # AT+QCFG="band" (complex band settings)
 #  network_scan_mode: null        # AT+QCFG="nwscanmode" (network scan mode)
+#  clear_forbidden_plmn: true     # AT+QFPLMNCFG="Delete","all"
+
+# Do not implement. These could break the interaction with the modem.
 #  usb_configuration: null        # AT+QCFG="usbcfg" (USB interface config)
