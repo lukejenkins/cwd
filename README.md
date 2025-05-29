@@ -34,7 +34,7 @@ The purpose of this project is to create a python program that:
 ### Longer term goals
 
 - [ ] Add support for gathering location information from gpsd
-- [ ] Switch from clobering modem config each time it is run, move to a configuration file (YAML?) and have the program check config and only make a change if needed. This will reduce wear on the flash memory of the modem.
+- [X] Switch from clobering modem config each time it is run, move to a configuration file (YAML?) and have the program check config and only make a change if needed. This will reduce wear on the flash memory of the modem.
 - [ ] Support for multiple cell modem command sets
   - [ ] Telit LM960
   - [ ] Quectel RM5xxN Series
@@ -162,6 +162,8 @@ Cell War Driver provides a comprehensive command-line interface with various opt
 - `--list-modems` - List all supported modem types and exit
 - `--modem-info` - Show detailed information about the connected modem and exit
 - `--setup-only` - Run only the modem setup commands and exit
+- `--smart-config` - Use smart configuration system (only changes settings that differ from desired values)
+- `--config-file FILE` - Path to YAML configuration file for smart configuration (default: modem_config.yaml)
 - `--signal-monitor` - Monitor signal strength in real-time (simplified mode)
 
 ### Using Environment Variables
@@ -185,6 +187,8 @@ All configuration options can also be set using environment variables or a `.env
 - `FAST_COMMAND_INTERVAL` - Fast command loop interval in seconds
 - `MEDIUM_COMMAND_INTERVAL` - Medium command loop interval in seconds
 - `SLOW_COMMAND_INTERVAL` - Slow command loop interval in seconds
+- `SMART_CONFIG` - Use smart configuration system (true/false)
+- `CONFIG_FILE` - Path to YAML configuration file for smart configuration
 
 You can export settings to a `.env` file using the `--export-config` option:
 
@@ -193,3 +197,92 @@ You can export settings to a `.env` file using the `--export-config` option:
 ```
 
 Then edit the file as needed and place it in the same directory as the program.
+
+### Smart Configuration System
+
+Cell War Driver includes a smart configuration system that intelligently checks current modem settings against desired values in a YAML configuration file. This system only applies changes when needed, which reduces flash memory wear on the modem and extends its lifespan.
+
+#### Using Smart Configuration
+
+To use the smart configuration system:
+
+```bash
+# Run with smart configuration (uses default modem_config.yaml)
+./cwd --smart-config
+
+# Use a custom configuration file
+./cwd --smart-config --config-file my_modem_config.yaml
+
+# Run only the smart configuration and exit
+./cwd --smart-config --setup-only
+```
+
+#### Configuration File Format
+
+The configuration file uses YAML format and is organized into sections for different types of settings:
+
+```yaml
+# Basic configuration settings
+basic:
+  error_reporting: 2              # AT+CMEE=2 (verbose error messages)
+  time_zone_update: 3             # AT+CTZU=3 (enable automatic time zone update)
+
+# Network configuration
+network:
+  clear_forbidden_plmn: true      # AT+QFPLMNCFG="Delete","all"
+  display_rssi_in_scan: 1         # AT+QOPSCFG="displayrssi",1
+  display_bandwidth_in_scan: 1    # AT+QOPSCFG="displaybw",1
+
+# GNSS (GPS) configuration
+gnss:
+  enabled: true                   # Whether GNSS should be enabled
+  output_port: "usbnmea"          # AT+QGPSCFG="outport","usbnmea"
+  # ... other GNSS settings ...
+```
+
+#### How It Works
+
+1. The system first reads the current modem settings using query commands
+2. It compares each setting with the desired value from the configuration file
+3. Only if a setting differs from the desired value, it sends a command to change it
+4. It verifies the change was applied correctly
+
+This approach minimizes writes to the modem's flash memory, which has a limited number of write cycles.
+
+#### Example: Customizing the Configuration File
+
+You can customize the modem_config.yaml file to match your specific requirements. Here's an example that changes GPS settings:
+
+```bash
+# Create a copy of the default configuration
+cp modem_config.yaml my_custom_config.yaml
+
+# Edit the file with your preferred text editor
+vim my_custom_config.yaml
+```
+
+Example customization (changing GPS fix frequency to 1Hz instead of 10Hz):
+
+```yaml
+# GNSS (GPS) configuration
+gnss:
+  enabled: true
+  # ... other settings ...
+  fix_frequency: 1                # Changed from 10Hz to 1Hz to save power
+  # ... other settings ...
+```
+
+Then run with your custom configuration:
+
+```bash
+./cwd --smart-config --config-file my_custom_config.yaml
+```
+
+#### Benefits of Smart Configuration
+
+- **Reduced Flash Wear**: Only applies changes when needed, extending modem lifespan
+- **Consistency**: Ensures modem settings are always in the desired state
+- **Transparency**: Logs which settings were changed and which were already correct
+- **Configurability**: Easy to adjust settings via YAML file without changing code
+
+For detailed documentation on the smart configuration system, see [documentation/smart_configuration.md](documentation/smart_configuration.md).

@@ -1,0 +1,38 @@
+# Quectel EG25 Modem Configuration
+# This file defines the desired modem configuration settings.
+# The smart configuration system will check current values and only apply changes when needed.
+
+# Basic configuration settings
+basic:
+  error_reporting: 2              # AT+CMEE=2 (verbose error messages)
+  time_zone_update: 3             # AT+CTZU=3 (enable automatic time zone update)
+
+# Network configuration
+network:
+  clear_forbidden_plmn: true      # AT+QFPLMNCFG="Delete","all"
+  display_rssi_in_scan: 1         # AT+QOPSCFG="displayrssi",1
+  display_bandwidth_in_scan: 1    # AT+QOPSCFG="displaybw",1
+
+# GNSS (GPS) configuration
+gnss:
+  enabled: true                   # Whether GNSS should be enabled
+  output_port: "usbnmea"          # AT+QGPSCFG="outport","usbnmea"
+  nmea_source: 1                  # AT+QGPSCFG="nmeasrc",1
+  gps_nmea_type: 31               # AT+QGPSCFG="gpsnmeatype",31 (all GPS sentences)
+  glonass_nmea_type: 7            # AT+QGPSCFG="glonassnmeatype",7 (all GLONASS sentences)
+  galileo_nmea_type: 1            # AT+QGPSCFG="galileonmeatype",1 (all Galileo sentences)
+  beidou_nmea_type: 3             # AT+QGPSCFG="beidounmeatype",3 (all Beidou sentences)
+  gsv_extended_nmea: 1            # AT+QGPSCFG="gsvextnmeatype",1 (extended GGSV)
+  gnss_config: 1                  # AT+QGPSCFG="gnssconfig",1 (all supported constellations)
+  auto_gps: 1                     # AT+QGPSCFG="autogps",1 (auto-start on restart)
+  agps_position_mode: 0           # AT+QGPSCFG="agpsposmode",0 (standalone mode)
+  fix_frequency: 10               # AT+QGPSCFG="fixfreq",10 (10Hz NMEA output)
+  one_pps: 1                      # AT+QGPSCFG="1pps",1 (1PPS output)
+  raw_data_config: "31,0"         # AT+QGPSCFG="gnssrawdata",31,0 (raw output for all constellations)
+
+# Advanced settings (optional - these would be more complex to implement)
+# These are commented out for the initial implementation
+#advanced:
+#  band_configuration: null       # AT+QCFG="band" (complex band settings)
+#  network_scan_mode: null        # AT+QCFG="nwscanmode" (network scan mode)
+#  usb_configuration: null        # AT+QCFG="usbcfg" (USB interface config)

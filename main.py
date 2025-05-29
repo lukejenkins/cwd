@@ -50,6 +50,8 @@ Utility Options:
   --list-modems         List all supported modem types and exit
   --modem-info          Show detailed information about the connected modem and exit
   --setup-only          Run only the modem setup commands and exit
+  --smart-config        Use smart configuration system (only changes settings that differ from desired values)
+  --config-file FILE    Path to YAML configuration file for smart configuration (default: modem_config.yaml)
   --signal-monitor      Monitor signal strength in real-time (simplified mode)
   
 See README.md for complete documentation and usage examples.
@@ -67,6 +69,7 @@ from config import load_config
 from logger import ModemLogger
 from modem import ModemCommunicator
 from parser import ModemResponseParser
+from smart_config import apply_smart_configuration
 
 # Version information
 __version__ = "1.0.0"
@@ -424,9 +427,13 @@ Examples:
                       help="Show detailed information about the connected modem and exit")
     util_group.add_argument("--setup-only", action="store_true", default=False,
                       help="Run only the modem setup commands and exit")
+    util_group.add_argument("--smart-config", action="store_true", default=False,
+                      help="Use smart configuration system (only changes settings that differ from desired values)")
+    util_group.add_argument("--config-file", type=str, default="modem_config.yaml",
+                      help="Path to YAML configuration file for smart configuration")
     util_group.add_argument("--signal-monitor", action="store_true", default=False,
                       help="Monitor signal strength in real-time (simplified mode)")
-    
+
     return parser
 
 
@@ -961,6 +968,76 @@ def setup_modem_only(config: Dict[str, Any]) -> int:
         logger.close()
 
 
+def smart_config_only(config: Dict[str, Any], config_file: str) -> int:
+    """
+    Run only the smart configuration system and exit.
+    
+    This function applies the smart configuration system which intelligently
+    compares current modem settings with desired values from a YAML configuration
+    file and only changes settings that differ from the desired state.
+    
+    Args:
+        config: Configuration dictionary containing connection settings
+        config_file: Path to the YAML configuration file
+        
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    # Set up logging
+    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
+    logger.log_info(f"Running smart configuration on {config['PORT']} at {config['BAUDRATE']} baud...")
+    logger.log_info(f"Using configuration file: {config_file}")
+    
+    # Create a modem communicator
+    modem = ModemCommunicator(config, logger)
+    
+    try:
+        # Connect to the modem
+        if not modem.connect():
+            logger.log_error(f"Failed to connect to modem on {config['PORT']}")
+            return 1
+        
+        logger.log_info("Connected to modem. Running smart configuration...")
+        
+        # Verify the modem is a Quectel EG25
+        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
+        if not is_quectel_eg25:
+            logger.log_error("Modem verification failed. Smart configuration is designed for Quectel EG25 modems.")
+            logger.log_error("Cannot proceed with smart configuration. Please check your hardware.")
+            modem.disconnect()
+            logger.close()
+            return 1
+        
+        # Run the smart configuration system
+        logger.log_info("Applying smart configuration...")
+        success = apply_smart_configuration(modem, config_file, logger)
+        
+        # Show summary
+        logger.log_info("-" * 50)
+        if success:
+            logger.log_info("Smart configuration SUCCESSFUL")
+            logger.log_info("All modem settings have been verified and updated as needed.")
+            return 0
+        else:
+            logger.log_error("Smart configuration FAILED")
+            logger.log_error("Some settings could not be applied. Check the logs for details.")
+            return 1
+            
+    except FileNotFoundError:
+        logger.log_error(f"Configuration file not found: {config_file}")
+        logger.log_error("Please create a YAML configuration file or specify a different path with --config-file")
+        return 1
+        
+    except Exception as e:
+        logger.log_error(f"Error during smart configuration: {str(e)}")
+        return 1
+        
+    finally:
+        # Clean up
+        modem.disconnect()
+        logger.close()
+
+
 def show_detailed_modem_info(config: Dict[str, Any]) -> int:
     """
     Show detailed information about the connected modem.
@@ -1137,6 +1214,23 @@ def main():
     # Load configuration from .env file first
     config = load_config()
     
+    # Apply command-line argument overrides to config early
+    # so they are available for utility functions
+    if args.port:
+        config["PORT"] = args.port
+    if args.baudrate:
+        config["BAUDRATE"] = args.baudrate
+    if args.timeout:
+        config["TIMEOUT"] = args.timeout
+    if args.log_dir:
+        config["LOG_DIR"] = args.log_dir
+    if args.log_level:
+        config["LOG_LEVEL"] = args.log_level
+    if args.command_delay:
+        config["COMMAND_DELAY"] = args.command_delay
+    if args.retry_count:
+        config["RETRY_COUNT"] = args.retry_count
+    
     # If --list-commands is specified, display all command sets and exit
     if args.list_commands:
         print("Cell War Driver - AT Commands")
@@ -1169,27 +1263,15 @@ def main():
     if args.setup_only:
         return setup_modem_only(config)
         
+    # If --smart-config is specified, run only the smart configuration system and exit
+    if args.smart_config:
+        return smart_config_only(config, args.config_file)
+        
     # If --signal-monitor is specified, monitor signal strength in real-time and exit
     if args.signal_monitor:
         return monitor_signal_strength(config)
     
-    # Override config with command-line arguments if provided
-    
-    # Override config with command-line arguments if provided
-    if args.port:
-        config["PORT"] = args.port
-    if args.baudrate:
-        config["BAUDRATE"] = args.baudrate
-    if args.timeout:
-        config["TIMEOUT"] = args.timeout
-    if args.log_dir:
-        config["LOG_DIR"] = args.log_dir
-    if args.log_level:
-        config["LOG_LEVEL"] = args.log_level
-    if args.command_delay:
-        config["COMMAND_DELAY"] = args.command_delay
-    if args.retry_count:
-        config["RETRY_COUNT"] = args.retry_count
+    # Apply remaining command-line argument overrides to config
     if args.csv_dir:
         config["CSV_DIR"] = args.csv_dir
     if args.csv_filename:
@@ -1275,9 +1357,15 @@ def main():
             logger.close()
             return 1
         
-        # Set up the modem
-        if not modem_setup(modem, logger):
-            logger.log_error("Failed to set up modem. Continuing with limited functionality.")
+        # Set up the modem using either traditional setup or smart configuration
+        if args.smart_config:
+            logger.log_info("Using smart configuration system...")
+            if not apply_smart_configuration(modem, args.config_file, logger):
+                logger.log_error("Failed to apply smart configuration. Continuing with limited functionality.")
+        else:
+            logger.log_info("Using traditional modem setup...")
+            if not modem_setup(modem, logger):
+                logger.log_error("Failed to set up modem. Continuing with limited functionality.")
         
         # Collect static modem information
         if not collect_modem_info(modem, parser, logger):
