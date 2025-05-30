@@ -231,7 +231,7 @@ class SmartModemConfigurator:
             self.logger.log_info("FPLMN list is already empty, skipping clear operation")
             self.stats['skipped'] += 1
             return True
-
+    
     def _configure_qopscfg_displayrssi(self, desired_value: int) -> bool:
         """Configure RSSI display in operator scan."""
         return self._check_set_verify_qopscfg("displayrssi", desired_value)
@@ -332,108 +332,108 @@ class SmartModemConfigurator:
             self.stats['changed'] += 1
             return True
         else:
-                    self.logger.log_error(f"Failed to configure QGPSCFG gnssrawdata: {response}")
-                    self.stats['failed'] += 1
-                    return False
-    
-        def _check_set_verify_numeric(self, at_command: str, desired_value: int, response_pattern: str) -> bool:
-            """
-            Generic method for check-set-verify pattern with numeric values.
-    
-            Args:
-                at_command: Base AT command (e.g., "AT+CMEE")
-                desired_value: Desired numeric value
-                response_pattern: Regex pattern to extract current value from query response
-                
-            Returns:
-                bool: True if setting was successful or already correct
-            """
-            self.stats['checked'] += 1
+            self.logger.log_error(f"Failed to configure QGPSCFG gnssrawdata: {response}")
+            self.stats['failed'] += 1
+            return False
             
-            # Query current value
-            query_cmd = f"{at_command}?"
-            success, response = self.modem.execute_command(query_cmd)
-            if not success:
-                self.logger.log_error(f"Failed to query {at_command}")
-                self.stats['failed'] += 1
-                return False
+    def _check_set_verify_numeric(self, at_command: str, desired_value: int, response_pattern: str) -> bool:
+        """
+        Generic method for check-set-verify pattern with numeric values.
+        
+        Args:
+            at_command: Base AT command (e.g., "AT+CMEE")
+            desired_value: Desired numeric value
+            response_pattern: Regex pattern to extract current value from query response
             
-            # Parse current value
-            match = re.search(response_pattern, response)
-            if not match:
-                self.logger.log_warning(f"Could not parse current value for {at_command}")
-                # Proceed with setting anyway
+        Returns:
+            bool: True if setting was successful or already correct
+        """
+        self.stats['checked'] += 1
+        
+        # Query current value
+        query_cmd = f"{at_command}?"
+        success, response = self.modem.execute_command(query_cmd)
+        if not success:
+            self.logger.log_error(f"Failed to query {at_command}")
+            self.stats['failed'] += 1
+            return False
+        
+        # Parse current value
+        match = re.search(response_pattern, response)
+        if not match:
+            self.logger.log_warning(f"Could not parse current value for {at_command}")
+            # Proceed with setting anyway
+            current_value = None
+        else:
+            try:
+                current_value = int(match.group(1))
+            except (ValueError, TypeError):
+                self.logger.log_warning(f"Failed to convert {at_command} value to integer: {match.group(1)}")
                 current_value = None
-            else:
-                try:
-                    current_value = int(match.group(1))
-                except (ValueError, TypeError):
-                    self.logger.log_warning(f"Failed to convert {at_command} value to integer: {match.group(1)}")
-                    current_value = None
+        
+        # Check if change is needed
+        if current_value == desired_value:
+            self.logger.log_info(f"{at_command} already set to {desired_value}, skipping")
+            self.stats['skipped'] += 1
+            return True
+        
+        # Set new value
+        set_cmd = f"{at_command}={desired_value}"
+        self.logger.log_info(f"Changing {at_command} from {current_value} to {desired_value}")
+        success, response = self.modem.execute_command(set_cmd)
+        if success:
+            self.logger.log_info(f"{at_command} configured successfully")
+            self.stats['changed'] += 1
+            return True
+        else:
+            self.logger.log_error(f"Failed to configure {at_command}: {response}")
+            self.stats['failed'] += 1
+            return False
             
-            # Check if change is needed
-            if current_value == desired_value:
-                self.logger.log_info(f"{at_command} already set to {desired_value}, skipping")
-                self.stats['skipped'] += 1
-                return True
-            
-            # Set new value
-            set_cmd = f"{at_command}={desired_value}"
-            self.logger.log_info(f"Changing {at_command} from {current_value} to {desired_value}")
-            success, response = self.modem.execute_command(set_cmd)
-            if success:
-                self.logger.log_info(f"{at_command} configured successfully")
-                self.stats['changed'] += 1
-                return True
-            else:
-                self.logger.log_error(f"Failed to configure {at_command}: {response}")
-                self.stats['failed'] += 1
-                return False
-    
-        def _check_set_verify_qopscfg(self, parameter: str, desired_value: int) -> bool:
-            """Check-set-verify pattern for QOPSCFG parameters."""
-            self.stats['checked'] += 1
-            
-            # Query current value
-            query_cmd = f'AT+QOPSCFG="{parameter}"'
-            success, response = self.modem.execute_command(query_cmd)
-            if not success:
-                self.logger.log_error(f"Failed to query QOPSCFG {parameter}")
-                self.stats['failed'] += 1
-                return False
-            
-            # Parse current value - handle both quoted and unquoted numeric values
-            pattern = rf'\+QOPSCFG:\s*"{re.escape(parameter)}",\s*(\d+)'
-            match = re.search(pattern, response)
-            if not match:
-                self.logger.log_warning(f"Could not parse current value for QOPSCFG {parameter}")
-                # Proceed with setting anyway
+    def _check_set_verify_qopscfg(self, parameter: str, desired_value: int) -> bool:
+        """Check-set-verify pattern for QOPSCFG parameters."""
+        self.stats['checked'] += 1
+        
+        # Query current value
+        query_cmd = f'AT+QOPSCFG="{parameter}"'
+        success, response = self.modem.execute_command(query_cmd)
+        if not success:
+            self.logger.log_error(f"Failed to query QOPSCFG {parameter}")
+            self.stats['failed'] += 1
+            return False
+        
+        # Parse current value - handle both quoted and unquoted numeric values
+        pattern = rf'\+QOPSCFG:\s*"{re.escape(parameter)}",\s*(\d+)'
+        match = re.search(pattern, response)
+        if not match:
+            self.logger.log_warning(f"Could not parse current value for QOPSCFG {parameter}")
+            # Proceed with setting anyway
+            current_value = None
+        else:
+            try:
+                current_value = int(match.group(1))
+            except (ValueError, TypeError):
+                self.logger.log_warning(f"Failed to convert QOPSCFG {parameter} value to integer: {match.group(1)}")
                 current_value = None
-            else:
-                try:
-                    current_value = int(match.group(1))
-                except (ValueError, TypeError):
-                    self.logger.log_warning(f"Failed to convert QOPSCFG {parameter} value to integer: {match.group(1)}")
-                    current_value = None
-            
-            # Check if change is needed
-            if current_value == desired_value:
-                self.logger.log_info(f"QOPSCFG {parameter} already set to {desired_value}, skipping")
-                self.stats['skipped'] += 1
-                return True
-            
-            # Set new value
-            set_cmd = f'AT+QOPSCFG="{parameter}",{desired_value}'
-            self.logger.log_info(f"Changing QOPSCFG {parameter} from {current_value} to {desired_value}")
-            success, response = self.modem.execute_command(set_cmd)
-            if success:
-                self.logger.log_info(f"QOPSCFG {parameter} configured successfully")
-                self.stats['changed'] += 1
-                return True
-            else:
-                self.logger.log_error(f"Failed to configure QOPSCFG {parameter}: {response}")
-                self.stats['failed'] += 1
-                return False
+        
+        # Check if change is needed
+        if current_value == desired_value:
+            self.logger.log_info(f"QOPSCFG {parameter} already set to {desired_value}, skipping")
+            self.stats['skipped'] += 1
+            return True
+        
+        # Set new value
+        set_cmd = f'AT+QOPSCFG="{parameter}",{desired_value}'
+        self.logger.log_info(f"Changing QOPSCFG {parameter} from {current_value} to {desired_value}")
+        success, response = self.modem.execute_command(set_cmd)
+        if success:
+            self.logger.log_info(f"QOPSCFG {parameter} configured successfully")
+            self.stats['changed'] += 1
+            return True
+        else:
+            self.logger.log_error(f"Failed to configure QOPSCFG {parameter}: {response}")
+            self.stats['failed'] += 1
+            return False
     
     def _print_configuration_summary(self) -> None:
         """Print summary of configuration operations."""
