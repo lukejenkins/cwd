@@ -415,8 +415,7 @@ class SmartModemConfigurator:
             except (ValueError, TypeError):
                 self.logger.log_warning(f"Failed to convert QOPSCFG {parameter} value to integer: {match.group(1)}")
                 current_value = None
-        
-        # Check if change is needed
+          # Check if change is needed
         if current_value == desired_value:
             self.logger.log_info(f"QOPSCFG {parameter} already set to {desired_value}, skipping")
             self.stats['skipped'] += 1
@@ -445,11 +444,11 @@ class SmartModemConfigurator:
         self.logger.log_info(f"  Settings failed: {self.stats['failed']}")
         
         if self.stats['changed'] > 0:
-            self.logger.log_info(f"✓ Applied {self.stats['changed']} configuration changes")
+            self.logger.log_info(f"[OK] Applied {self.stats['changed']} configuration changes")
         if self.stats['skipped'] > 0:
-            self.logger.log_info(f"✓ Skipped {self.stats['skipped']} settings (already correct)")
+            self.logger.log_info(f"[OK] Skipped {self.stats['skipped']} settings (already correct)")
         if self.stats['failed'] > 0:
-            self.logger.log_warning(f"⚠ {self.stats['failed']} settings failed to configure")
+            self.logger.log_warning(f"[!] {self.stats['failed']} settings failed to configure")
         
         efficiency = (self.stats['skipped'] / self.stats['checked'] * 100) if self.stats['checked'] > 0 else 0
         self.logger.log_info(f"Flash wear reduction: {efficiency:.1f}% of settings skipped")

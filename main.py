@@ -53,6 +53,7 @@ Utility Options:
   --smart-config        Use smart configuration system (only changes settings that differ from desired values)
   --config-file FILE    Path to YAML configuration file for smart configuration (default: modem_config.yaml)
   --signal-monitor      Monitor signal strength in real-time (simplified mode)
+  --oneshot             Run smart config, then each command cycle once, then exit
   
 See README.md for complete documentation and usage examples.
 """
@@ -62,6 +63,7 @@ import time
 import signal
 import json
 import argparse
+import traceback
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 
@@ -280,38 +282,449 @@ def collect_modem_info(modem: ModemCommunicator, parser: ModemResponseParser, lo
     return success_count > 0
 
 
-def run_command_set(modem: ModemCommunicator, parser: ModemResponseParser, 
-                   command_set: List[str], logger: ModemLogger) -> Tuple[int, int]:
+def run_command_set(modem: ModemCommunicator, parser: ModemResponseParser,
+                   command_set: List[str], logger: ModemLogger, command_set_name: str) -> Tuple[int, int]:
     """
-    Run a set of commands and parse the responses.
-    
+    Run a specific set of AT commands and parse their responses.
+
     Args:
-        modem: The modem communicator instance
-        parser: The parser instance
-        command_set: List of commands to execute
-        logger: The logger instance
-    
+        modem: ModemCommunicator instance.
+        parser: ModemResponseParser instance.
+        command_set: List of AT commands to execute.
+        logger: ModemLogger instance.
+        command_set_name: Name of the command set for logging.
+
     Returns:
-        Tuple[int, int]: (success_count, command_count)
+        Tuple[int, int]: Number of successful commands, total commands executed.
     """
     success_count = 0
-    command_count = 0
-    
+    total_commands = len(command_set)
+
+    if not command_set:
+        logger.log_info(f"Command set '{command_set_name}' is empty, skipping.")
+        return 0, 0
+
+    logger.log_info(f"--- Running command set: {command_set_name} ---")
     for cmd in command_set:
-        command_count += 1
+        logger.log_info(f"Executing: {cmd}")
         success, response = modem.execute_command(cmd)
         if success:
-            parser.parse_cell_info(cmd, response)
+            logger.log_info(f"Successful response for {cmd}: {response.strip()}") 
+            parser.parse_modem_info(cmd, response)
             success_count += 1
         else:
-            logger.log_warning(f"Failed to execute command: {cmd}")
+            logger.log_warning(f"Command failed: {cmd} - Response: {response}")
+
+    logger.log_info(f"--- Finished command set: {command_set_name} ({success_count}/{total_commands} successful) ---")
+    return success_count, total_commands
+
+
+def oneshot_mode(config: Dict[str, Any], config_file: str) -> int:
+    """
+    Run smart configuration, then each command cycle once, then exit.
+
+    Args:
+        config: Configuration dictionary.
+        config_file: Path to the smart configuration YAML file.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure).
+    """
+    logger = ModemLogger(
+        log_dir=config.get("LOG_DIR", "output"),
+        log_level=config.get("LOG_LEVEL", "INFO")
+    )
+    logger.log_info("Starting Cell War Driver in oneshot mode...")
+
+    modem = ModemCommunicator(
+        config=config,
+        logger=logger
+    )
+
+    parser = ModemResponseParser(
+        logger=logger,
+        csv_dir=config.get("CSV_DIR", "output"),
+        csv_filename=config.get("CSV_FILENAME", "cell_data.csv"),
+        json_dir=config.get("JSON_DIR", "output"),
+        json_filename=config.get("JSON_FILENAME", "modem_info.json")
+    )
+
+    try:
+        if not modem.connect():
+            logger.log_error("Failed to connect to modem. Exiting oneshot mode.")
+            return 1
+        logger.log_info("Connected to modem.")
+
+        if not modem.initialize_modem():
+            logger.log_warning("Modem initialization failed. Continuing, but some commands might behave unexpectedly.")
+
+        logger.log_info("Applying smart configuration...")
+        smart_config_success = apply_smart_configuration(modem, config_file, logger)
+        if smart_config_success:
+            logger.log_info("Smart configuration applied successfully.")
+        else:
+            logger.log_warning("Smart configuration failed or had issues. Continuing with command cycles.")
+
+        all_commands = setup_modem_commands()
+
+        command_sets_to_run = [
+            "setup", "modem_info", "gnss_info", "network_config",
+            "fast_loop", "medium_loop", "slow_loop"
+        ]
+        total_successful_commands = 0
+        total_executed_commands = 0
+
+        for set_name in command_sets_to_run:
+            command_set = all_commands.get(set_name, [])
+            if command_set:
+                s_count, t_count = run_command_set(modem, parser, command_set, logger, set_name)
+                total_successful_commands += s_count
+                total_executed_commands += t_count
+            else:
+                logger.log_info(f"Command set '{set_name}' not found or is empty, skipping.")
+
+        logger.log_info(f"All command cycles executed. Total successful: {total_successful_commands}/{total_executed_commands}")
+        logger.log_info("Oneshot mode completed successfully.")
+        return 0
+
+    except Exception as e:
+        logger.log_error(f"An error occurred during oneshot mode: {str(e)}")
+        import traceback
+        logger.log_error(traceback.format_exc())
+        return 1
+    finally:
+        if modem and modem.connected:
+            modem.disconnect()
+        if logger:
+            logger.close()
+
+
+def scan_serial_ports() -> int:
+    """
+    Scan for available serial ports and display them.
     
-    return success_count, command_count
+    Returns:
+        int: Exit code (0 for success)
+    """
+    print("Scanning for available serial ports...")
+    try:
+        import serial.tools.list_ports
+        ports = serial.tools.list_ports.comports()
+        if ports:
+            print("Available serial ports:")
+            for port in ports:
+                print(f"  {port.device} - {port.description}")
+        else:
+            print("No serial ports found.")
+    except ImportError:
+        print("Error: pyserial not installed. Install with: pip install pyserial")
+        return 1
+    return 0
+
+
+def show_environment_variables() -> int:
+    """
+    Show all environment variables and their values.
+    
+    Returns:
+        int: Exit code (0 for success)
+    """
+    print("Environment Variables:")
+    print("=====================")
+    config = load_config()
+    for key, value in config.items():
+        print(f"{key}: {value}")
+    return 0
+
+
+def list_supported_modems() -> int:
+    """
+    List all supported modem types.
+    
+    Returns:
+        int: Exit code (0 for success)
+    """
+    print("Supported Modem Types:")
+    print("====================")
+    print("  - Quectel EG25-G")
+    print("  - Other AT command compatible modems (limited support)")
+    return 0
+
+
+def show_detailed_modem_info(config: Dict[str, Any]) -> int:
+    """
+    Show detailed information about the connected modem.
+    
+    Args:
+        config: Configuration dictionary
+        
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    logger = ModemLogger(
+        log_dir=config.get("LOG_DIR", "output"),
+        log_level=config.get("LOG_LEVEL", "INFO")
+    )
+    
+    modem = ModemCommunicator(config=config, logger=logger)
+    
+    try:
+        if not modem.connect():
+            logger.log_error("Failed to connect to modem")
+            return 1
+            
+        if not modem.initialize_modem():
+            logger.log_error("Failed to initialize modem")
+            return 1
+            
+        parser = ModemResponseParser(
+            csv_dir=config.get("CSV_DIR", "output"),
+            csv_filename=config.get("CSV_FILENAME", "cell_data.csv"),
+            json_dir=config.get("JSON_DIR", "output"),
+            json_filename=config.get("JSON_FILENAME", "modem_info.json"),
+            logger=logger
+        )
+        
+        # Collect modem information
+        collect_modem_info(modem, parser, logger)
+        
+        logger.log_info("Modem information collection completed")
+        return 0
+        
+    except Exception as e:
+        logger.log_error(f"Error collecting modem info: {str(e)}")
+        return 1
+    finally:
+        if modem and modem.connected:
+            modem.disconnect()
+        if logger:
+            logger.close()
+
+
+def setup_modem_only(config: Dict[str, Any]) -> int:
+    """
+    Run only the modem setup commands.
+    
+    Args:
+        config: Configuration dictionary
+        
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    logger = ModemLogger(
+        log_dir=config.get("LOG_DIR", "output"),
+        log_level=config.get("LOG_LEVEL", "INFO")
+    )
+    
+    modem = ModemCommunicator(config=config, logger=logger)
+    
+    try:
+        if not modem.connect():
+            logger.log_error("Failed to connect to modem")
+            return 1
+            
+        # Run modem setup
+        success = modem_setup(modem, logger)
+        
+        if success:
+            logger.log_info("Modem setup completed successfully")
+            return 0
+        else:
+            logger.log_error("Modem setup failed")
+            return 1
+            
+    except Exception as e:
+        logger.log_error(f"Error during modem setup: {str(e)}")
+        return 1
+    finally:
+        if modem and modem.connected:
+            modem.disconnect()
+        if logger:
+            logger.close()
+
+
+def smart_config_only(config: Dict[str, Any], config_file: str) -> int:
+    """
+    Run only the smart configuration system.
+    
+    Args:
+        config: Configuration dictionary
+        config_file: Path to the YAML configuration file
+        
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    logger = ModemLogger(
+        log_dir=config.get("LOG_DIR", "output"),
+        log_level=config.get("LOG_LEVEL", "INFO")
+    )
+    
+    modem = ModemCommunicator(config=config, logger=logger)
+    
+    try:
+        if not modem.connect():
+            logger.log_error("Failed to connect to modem")
+            return 1
+            
+        if not modem.initialize_modem():
+            logger.log_warning("Modem initialization failed, continuing anyway")
+            
+        # Apply smart configuration
+        success = apply_smart_configuration(modem, config_file, logger)
+        
+        if success:
+            logger.log_info("Smart configuration completed successfully")
+            return 0
+        else:
+            logger.log_error("Smart configuration failed")
+            return 1
+            
+    except Exception as e:
+        logger.log_error(f"Error during smart configuration: {str(e)}")
+        return 1
+    finally:
+        if modem and modem.connected:
+            modem.disconnect()
+        if logger:
+            logger.close()
+
+
+def monitor_signal_strength(config: Dict[str, Any]) -> int:
+    """
+    Monitor signal strength in real-time.
+    
+    Args:
+        config: Configuration dictionary
+        
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    logger = ModemLogger(
+        log_dir=config.get("LOG_DIR", "output"),
+        log_level=config.get("LOG_LEVEL", "INFO")
+    )
+    
+    modem = ModemCommunicator(config=config, logger=logger)
+    
+    try:
+        if not modem.connect():
+            logger.log_error("Failed to connect to modem")
+            return 1
+            
+        if not modem.initialize_modem():
+            logger.log_error("Failed to initialize modem")
+            return 1
+            
+        logger.log_info("Starting signal strength monitoring... Press Ctrl+C to stop")
+        
+        # Signal monitoring loop
+        while True:
+            success, response = modem.execute_command("AT+CSQ")
+            if success:
+                logger.log_info(f"Signal quality: {response.strip()}")
+            else:
+                logger.log_warning("Failed to get signal quality")
+                
+            time.sleep(2)  # Monitor every 2 seconds
+            
+    except KeyboardInterrupt:
+        logger.log_info("Signal monitoring stopped by user")
+        return 0
+    except Exception as e:
+        logger.log_error(f"Error during signal monitoring: {str(e)}")
+        return 1
+    finally:
+        if modem and modem.connected:
+            modem.disconnect()
+        if logger:
+            logger.close()
+
+
+def run_main_loop(config: Dict[str, Any], args) -> int:
+    """
+    Run the main Cell War Driver loop.
+    
+    Args:
+        config: Configuration dictionary
+        args: Parsed command line arguments
+        
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
+    logger = ModemLogger(
+        log_dir=config.get("LOG_DIR", "output"),
+        log_level=config.get("LOG_LEVEL", "INFO")
+    )
+    
+    modem = ModemCommunicator(config=config, logger=logger)
+    
+    parser = ModemResponseParser(
+        csv_dir=config.get("CSV_DIR", "output"),
+        csv_filename=config.get("CSV_FILENAME", "cell_data.csv"),
+        json_dir=config.get("JSON_DIR", "output"),
+        json_filename=config.get("JSON_FILENAME", "modem_info.json"),
+        logger=logger
+    )
+    
+    try:
+        if not modem.connect():
+            logger.log_error("Failed to connect to modem")
+            return 1
+            
+        if not modem_setup(modem, logger):
+            logger.log_error("Failed to setup modem")
+            return 1
+            
+        # Collect static modem information
+        collect_modem_info(modem, parser, logger)
+        
+        commands = setup_modem_commands()
+        
+        logger.log_info("Starting main monitoring loop... Press Ctrl+C to stop")
+        
+        fast_interval = args.fast_interval
+        medium_interval = args.medium_interval
+        slow_interval = args.slow_interval
+        
+        last_medium = 0
+        last_slow = 0
+        
+        while True:
+            current_time = time.time()
+            
+            # Run fast loop commands
+            run_command_set(modem, parser, commands["fast_loop"], logger, "fast_loop")
+            
+            # Run medium loop commands
+            if current_time - last_medium >= medium_interval:
+                run_command_set(modem, parser, commands["medium_loop"], logger, "medium_loop")
+                last_medium = current_time
+                
+            # Run slow loop commands
+            if current_time - last_slow >= slow_interval:
+                run_command_set(modem, parser, commands["slow_loop"], logger, "slow_loop")
+                last_slow = current_time
+                
+            time.sleep(fast_interval)
+            
+    except KeyboardInterrupt:
+        logger.log_info("Main loop stopped by user")
+        return 0
+    except Exception as e:
+        logger.log_error(f"Error in main loop: {str(e)}")
+        logger.log_error(traceback.format_exc())
+        return 1
+    finally:
+        if modem and modem.connected:
+            modem.disconnect()
+        if logger:
+            logger.close()
 
 
 class CustomFormatter(argparse.RawDescriptionHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
     """Custom formatter that combines RawDescriptionHelpFormatter and ArgumentDefaultsHelpFormatter."""
     pass
+
 
 def setup_argument_parser() -> argparse.ArgumentParser:
     """
@@ -433,776 +846,10 @@ Examples:
                       help="Path to YAML configuration file for smart configuration")
     util_group.add_argument("--signal-monitor", action="store_true", default=False,
                       help="Monitor signal strength in real-time (simplified mode)")
+    util_group.add_argument("--oneshot", action="store_true", default=False,
+                      help="Run smart config, then each command cycle once, then exit")
 
     return parser
-
-
-def test_modem_connection(config: Dict[str, Any]) -> int:
-    """
-    Test the modem connection and display basic information.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
-    """
-    # Set up temporary logging to stdout only
-    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
-    logger.log_info(f"Testing modem connection on {config['PORT']} at {config['BAUDRATE']} baud...")
-    
-    # Create a modem communicator
-    modem = ModemCommunicator(config, logger)
-    
-    try:
-        # Connect to the modem
-        if not modem.connect():
-            logger.log_error(f"Failed to connect to modem on {config['PORT']}")
-            return 1
-        
-        logger.log_info(f"Successfully connected to modem on {config['PORT']}")
-        
-        # Verify the modem is a Quectel EG25
-        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
-        if not is_quectel_eg25:
-            logger.log_error("Modem verification failed. This program is designed for Quectel EG25 modems.")
-            logger.log_warning("Test continuing but some commands may not work properly.")
-        
-        # Basic test commands with friendly descriptions
-        test_commands = [
-            ("AT", "Basic connectivity test"),
-            ("AT+CGMI", "Manufacturer information"),
-            ("AT+CGMM", "Model information"),
-            ("AT+CGMR", "Firmware version"),
-            ("AT+CGSN", "IMEI/Serial number"),
-            ("AT+CIMI", "SIM IMSI"),
-            ("AT+CSQ", "Signal quality"),
-            ("AT+CREG?", "Network registration status"),
-            ("AT+COPS?", "Current operator"),
-            ("AT+QNWINFO", "Network information"),
-        ]
-        
-        success_count = 0
-        modem_info = {}
-        
-        for cmd, description in test_commands:
-            logger.log_info(f"Testing: {description} ({cmd})")
-            success, response = modem.execute_command(cmd)
-            
-            if success:
-                success_count += 1
-                clean_response = response.replace(cmd, "").replace("OK", "").strip()
-                
-                # Process specific responses for better output
-                if "CGMI:" in response:
-                    manufacturer = clean_response.split("+CGMI:")[1].strip() if "+CGMI:" in clean_response else clean_response
-                    modem_info["manufacturer"] = manufacturer
-                    logger.log_info(f"Manufacturer: {manufacturer}")
-                
-                elif "CGMM:" in response:
-                    model = clean_response.split("+CGMM:")[1].strip() if "+CGMM:" in clean_response else clean_response
-                    modem_info["model"] = model
-                    logger.log_info(f"Model: {model}")
-                
-                elif "CGMR:" in response:
-                    firmware = clean_response.split("+CGMR:")[1].strip() if "+CGMR:" in clean_response else clean_response
-                    modem_info["firmware"] = firmware
-                    logger.log_info(f"Firmware: {firmware}")
-                
-                elif "CGSN:" in response:
-                    imei = clean_response.split("+CGSN:")[1].strip() if "+CGSN:" in clean_response else clean_response
-                    modem_info["imei"] = imei
-                    logger.log_info(f"IMEI: {imei}")
-                
-                elif "CIMI:" in response:
-                    imsi = clean_response.split("+CIMI:")[1].strip() if "+CIMI:" in clean_response else clean_response
-                    modem_info["imsi"] = imsi
-                    logger.log_info(f"SIM IMSI: {imsi}")
-                
-                elif "CSQ:" in response:
-                    csq_parts = clean_response.split("+CSQ:")[1].strip().split(",") if "+CSQ:" in clean_response else []
-                    if len(csq_parts) >= 2:
-                        rssi = int(csq_parts[0])
-                        rssi_dbm = -113 + (2 * rssi) if rssi < 99 else "Unknown"
-                        logger.log_info(f"Signal strength: {rssi_dbm} dBm (CSQ: {rssi})")
-                
-                elif "COPS:" in response:
-                    cops_parts = clean_response.split("+COPS:")[1].strip().split(",") if "+COPS:" in clean_response else []
-                    if len(cops_parts) >= 3:
-                        operator = cops_parts[2].strip('"')
-                        modem_info["operator"] = operator
-                        logger.log_info(f"Operator: {operator}")
-                
-                elif "QNWINFO:" in response:
-                    nw_parts = clean_response.split("+QNWINFO:")[1].strip().split(",") if "+QNWINFO:" in clean_response else []
-                    if len(nw_parts) >= 4:
-                        tech = nw_parts[0].strip('"')
-                        band = nw_parts[3].strip('"')
-                        logger.log_info(f"Network type: {tech}")
-                        logger.log_info(f"Band: {band}")
-                
-                elif "CREG:" in response:
-                    reg_parts = clean_response.split("+CREG:")[1].strip().split(",") if "+CREG:" in clean_response else []
-                    if len(reg_parts) >= 2:
-                        status_code = int(reg_parts[1].strip())
-                        status_text = {
-                            0: "Not registered, not searching",
-                            1: "Registered, home network",
-                            2: "Not registered, searching",
-                            3: "Registration denied",
-                            4: "Unknown",
-                            5: "Registered, roaming"
-                        }.get(status_code, f"Unknown ({status_code})")
-                        logger.log_info(f"Registration status: {status_text}")
-                
-                else:
-                    if clean_response:
-                        logger.log_info(f"Response: {clean_response}")
-                    else:
-                        logger.log_info("Command executed successfully")
-            else:
-                logger.log_error(f"Command failed: {response}")
-        
-        # Show summary
-        logger.log_info("-" * 50)
-        if modem_info.get("manufacturer") and modem_info.get("model"):
-            logger.log_info(f"Modem: {modem_info.get('manufacturer')} {modem_info.get('model')}")
-        if modem_info.get("firmware"):
-            logger.log_info(f"Firmware: {modem_info.get('firmware')}")
-        
-        if success_count == len(test_commands):
-            logger.log_info("All test commands executed successfully")
-            logger.log_info("Modem connection test PASSED")
-            return 0
-        else:
-            logger.log_warning(f"{success_count}/{len(test_commands)} test commands succeeded")
-            logger.log_warning("Modem connection test PARTIAL SUCCESS")
-            return 0
-            
-    except Exception as e:
-        logger.log_error(f"Error during modem test: {str(e)}")
-        return 1
-        
-    finally:
-        # Clean up
-        modem.disconnect()
-        logger.close()
-
-
-def scan_serial_ports() -> int:
-    """
-    Scan for available serial ports and display them.
-    
-    Returns:
-        int: Exit code (0 for success)
-    """
-    try:
-        import serial.tools.list_ports
-        ports = list(serial.tools.list_ports.comports())
-        
-        if not ports:
-            print("No serial ports found.")
-            return 0
-        
-        print(f"Found {len(ports)} serial ports:")
-        print("-" * 60)
-        print(f"{'Port':<15} {'Description':<25} {'Hardware ID':<20}")
-        print("-" * 60)
-        
-        for port in ports:
-            print(f"{port.device:<15} {port.description:<25} {port.hwid:<20}")
-        
-        print("\nTo use a specific port:")
-        print("  ./cwd --port <PORT_NAME>")
-        print("Example:")
-        print("  ./cwd --port /dev/ttyUSB2")
-        
-        return 0
-    except ImportError:
-        print("Error: pyserial package is required for port scanning.")
-        print("Install it with: pip install pyserial")
-        return 1
-    except Exception as e:
-        print(f"Error scanning ports: {str(e)}")
-        return 1
-
-
-def export_config_to_file(config: Dict[str, Any], filename: str) -> int:
-    """
-    Export the current configuration to a .env file.
-    
-    Args:
-        config: The configuration dictionary
-        filename: Name of the file to export to
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
-    """
-    try:
-        # Ensure the filename ends with .env
-        if not filename.endswith('.env'):
-            filename += '.env'
-        
-        # Create the file
-        with open(filename, 'w') as f:
-            f.write("# Cell War Driver Configuration File\n")
-            f.write("# Generated on: " + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n")
-            
-            # Serial connection settings
-            f.write("# Serial connection settings\n")
-            f.write(f"PORT={config['PORT']}\n")
-            f.write(f"BAUDRATE={config['BAUDRATE']}\n")
-            f.write(f"TIMEOUT={config['TIMEOUT']}\n\n")
-            
-            # Logging settings
-            f.write("# Logging settings\n")
-            f.write(f"LOG_DIR={config['LOG_DIR']}\n")
-            f.write(f"LOG_LEVEL={config['LOG_LEVEL']}\n\n")
-            
-            # Command execution settings
-            f.write("# Command execution settings\n")
-            f.write(f"COMMAND_DELAY={config['COMMAND_DELAY']}\n")
-            f.write(f"RETRY_COUNT={config['RETRY_COUNT']}\n\n")
-            
-            # Output settings
-            f.write("# Output settings\n")
-            f.write(f"CSV_DIR={config['CSV_DIR']}\n")
-            f.write(f"CSV_FILENAME={config['CSV_FILENAME']}\n")
-            f.write(f"JSON_DIR={config['JSON_DIR']}\n")
-            f.write(f"JSON_FILENAME={config['JSON_FILENAME']}\n\n")
-            
-            # Database settings
-            f.write("# Database settings\n")
-            f.write(f"USE_DATABASE={'true' if config['USE_DATABASE'] else 'false'}\n")
-            f.write(f"DB_TYPE={config['DB_TYPE']}\n")
-            f.write(f"DB_PATH={config['DB_PATH']}\n\n")
-            
-            # Command cadence settings
-            f.write("# Command cadence settings (in seconds)\n")
-            f.write(f"FAST_COMMAND_INTERVAL={config['FAST_COMMAND_INTERVAL']}\n")
-            f.write(f"MEDIUM_COMMAND_INTERVAL={config['MEDIUM_COMMAND_INTERVAL']}\n")
-            f.write(f"SLOW_COMMAND_INTERVAL={config['SLOW_COMMAND_INTERVAL']}\n")
-        
-        print(f"Configuration exported to: {filename}")
-        return 0
-    
-    except Exception as e:
-        print(f"Error exporting configuration: {str(e)}")
-        return 1
-
-
-def show_environment_variables() -> int:
-    """
-    Show all environment variables and their values.
-    
-    Returns:
-        int: Exit code (0 for success)
-    """
-    print("Cell War Driver Environment Variables")
-    print("=" * 50)
-    
-    # Get all environment variables
-    env_vars = os.environ
-    
-    # Filter for relevant variables
-    cwd_vars = {k: v for k, v in env_vars.items() if k in [
-        "PORT", "BAUDRATE", "TIMEOUT", 
-        "LOG_DIR", "LOG_LEVEL", 
-        "COMMAND_DELAY", "RETRY_COUNT",
-        "CSV_DIR", "CSV_FILENAME", "JSON_DIR", "JSON_FILENAME",
-        "USE_DATABASE", "DB_TYPE", "DB_PATH",
-        "FAST_COMMAND_INTERVAL", "MEDIUM_COMMAND_INTERVAL", "SLOW_COMMAND_INTERVAL"
-    ]}
-    
-    if not cwd_vars:
-        print("No Cell War Driver environment variables found.")
-        print("You can set environment variables or use a .env file.")
-        return 0
-    
-    # Print them in categories
-    categories = {
-        "Serial Connection": ["PORT", "BAUDRATE", "TIMEOUT"],
-        "Logging": ["LOG_DIR", "LOG_LEVEL"],
-        "Command Execution": ["COMMAND_DELAY", "RETRY_COUNT"],
-        "Output": ["CSV_DIR", "CSV_FILENAME", "JSON_DIR", "JSON_FILENAME"],
-        "Database": ["USE_DATABASE", "DB_TYPE", "DB_PATH"],
-        "Command Intervals": ["FAST_COMMAND_INTERVAL", "MEDIUM_COMMAND_INTERVAL", "SLOW_COMMAND_INTERVAL"]
-    }
-    
-    for category, vars in categories.items():
-        found = False
-        for var in vars:
-            if var in cwd_vars:
-                if not found:
-                    print(f"\n{category} Settings:")
-                    print("-" * 30)
-                    found = True
-                print(f"{var:<25} = {cwd_vars[var]}")
-    
-    return 0
-
-
-def list_supported_modems() -> int:
-    """
-    List all supported modem types and their capabilities.
-    
-    Returns:
-        int: Exit code (0 for success)
-    """
-    print("Cell War Driver - Supported Modem Types")
-    print("=======================================")
-    
-    supported_modems = [
-        {
-            "manufacturer": "Quectel",
-            "models": ["EG25-G", "EM12-G", "RM500Q", "RM520N"],
-            "technologies": ["LTE", "LTE-A", "5G NSA", "5G SA"],
-            "command_set": "Quectel",
-            "supported_features": [
-                "Basic cell information", 
-                "Signal quality", 
-                "Cell tower information",
-                "Neighboring cells",
-                "GPS/GNSS support"
-            ]
-        },
-        {
-            "manufacturer": "Sierra Wireless",
-            "models": ["EM7455", "EM7565", "EM7690"],
-            "technologies": ["LTE", "LTE-A"],
-            "command_set": "Sierra Wireless",
-            "supported_features": [
-                "Basic cell information", 
-                "Signal quality", 
-                "Cell tower information"
-            ]
-        },
-        {
-            "manufacturer": "Telit",
-            "models": ["LM960", "FN980"],
-            "technologies": ["LTE", "LTE-A", "5G NSA", "5G SA"],
-            "command_set": "Telit",
-            "supported_features": [
-                "Basic cell information", 
-                "Signal quality", 
-                "Full cell scan"
-            ]
-        }
-    ]
-    
-    for modem in supported_modems:
-        print(f"\n{modem['manufacturer']}:")
-        print(f"  Models: {', '.join(modem['models'])}")
-        print(f"  Technologies: {', '.join(modem['technologies'])}")
-        print(f"  Command Set: {modem['command_set']}")
-        print("  Supported Features:")
-        for feature in modem['supported_features']:
-            print(f"    - {feature}")
-    
-    print("\nNote: Support for some modem types is experimental.")
-    print("To use the program with a specific modem type (future feature):")
-    print("  ./cwd --modem-type <manufacturer>:<model>")
-    
-    return 0
-
-
-def monitor_signal_strength(config: Dict[str, Any]) -> int:
-    """
-    Monitor signal strength in real-time with a simple display.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
-    """
-    # Set up temporary logging to stdout only
-    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
-    logger.log_info(f"Starting signal monitor on {config['PORT']} at {config['BAUDRATE']} baud...")
-    
-    # Create a modem communicator
-    modem = ModemCommunicator(config, logger)
-    
-    try:
-        # Connect to the modem
-        if not modem.connect():
-            logger.log_error(f"Failed to connect to modem on {config['PORT']}")
-            return 1
-        
-        logger.log_info("Connected to modem. Monitoring signal strength (Ctrl+C to exit)...")
-        
-        # Verify the modem is a Quectel EG25
-        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
-        if not is_quectel_eg25:
-            logger.log_warning("Modem verification failed. Signal monitoring may not work properly.")
-        
-        print("\nSignal Monitor - Cell War Driver")
-        print("===============================")
-        print("Time             | Signal (dBm) | Quality | Technology | Operator")
-        print("-" * 75)
-        
-        # Main monitoring loop
-        while True:
-            # Get signal quality
-            success, response = modem.execute_command("AT+CSQ")
-            signal_dbm = "Unknown"
-            signal_quality = "Unknown"
-            
-            if success and "+CSQ:" in response:
-                parts = response.split("+CSQ:")[1].strip().split(",")
-                if len(parts) >= 2:
-                    rssi = int(parts[0].strip())
-                    signal_quality = parts[1].strip()
-                    if rssi < 99:  # 99 means unknown
-                        signal_dbm = f"{-113 + (2 * rssi)}"
-            
-            # Get technology and operator
-            success, tech_response = modem.execute_command("AT+QNWINFO")
-            tech = "Unknown"
-            operator = "Unknown"
-            
-            if success and "+QNWINFO:" in tech_response:
-                parts = tech_response.split("+QNWINFO:")[1].strip().split(",")
-                if len(parts) >= 3:
-                    tech = parts[0].strip('"')
-                    operator = parts[2].strip('"')
-            
-            # Print the current status
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            print(f"{timestamp} | {signal_dbm:^11} | {signal_quality:^7} | {tech:^10} | {operator}")
-            
-            # Wait before checking again
-            time.sleep(2)
-    
-    except KeyboardInterrupt:
-        print("\nSignal monitoring stopped.")
-        return 0
-        
-    except Exception as e:
-        logger.log_error(f"Error during signal monitoring: {str(e)}")
-        return 1
-        
-    finally:
-        # Clean up
-        modem.disconnect()
-        logger.close()
-
-
-def setup_modem_only(config: Dict[str, Any]) -> int:
-    """
-    Run only the modem setup commands and exit.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
-    """
-    # Set up temporary logging to stdout only
-    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
-    logger.log_info(f"Running modem setup on {config['PORT']} at {config['BAUDRATE']} baud...")
-    
-    # Create a modem communicator
-    modem = ModemCommunicator(config, logger)
-    
-    try:
-        # Connect to the modem
-        if not modem.connect():
-            logger.log_error(f"Failed to connect to modem on {config['PORT']}")
-            return 1
-        
-        logger.log_info("Connected to modem. Running setup commands...")
-        
-        # Verify the modem is a Quectel EG25
-        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
-        if not is_quectel_eg25:
-            logger.log_error("Modem verification failed. Setup commands are specific to Quectel EG25 modems.")
-            logger.log_error("Cannot proceed with setup. Please check your hardware.")
-            modem.disconnect()
-            logger.close()
-            return 1
-        
-        # Get the setup commands
-        commands = setup_modem_commands()
-        
-        # Initialize the modem first
-        if not modem.initialize_modem():
-            logger.log_error("Failed to initialize modem.")
-            return 1
-        
-        # Run only the setup commands
-        success_count = 0
-        total_count = len(commands["setup"])
-        
-        for cmd in commands["setup"]:
-            logger.log_info(f"Executing: {cmd}")
-            success, response = modem.execute_command(cmd)
-            
-            if success:
-                success_count += 1
-                logger.log_info("Command succeeded")
-            else:
-                logger.log_warning(f"Command failed: {response}")
-        
-        # Show summary
-        logger.log_info("-" * 50)
-        logger.log_info(f"Setup completed: {success_count}/{total_count} commands succeeded")
-        
-        if success_count == total_count:
-            logger.log_info("Modem setup SUCCESSFUL")
-            return 0
-        elif success_count > 0:
-            logger.log_warning("Modem setup PARTIALLY SUCCESSFUL")
-            return 0
-        else:
-            logger.log_error("Modem setup FAILED")
-            return 1
-            
-    except Exception as e:
-        logger.log_error(f"Error during modem setup: {str(e)}")
-        return 1
-        
-    finally:
-        # Clean up
-        modem.disconnect()
-        logger.close()
-
-
-def smart_config_only(config: Dict[str, Any], config_file: str) -> int:
-    """
-    Run only the smart configuration system and exit.
-    
-    This function applies the smart configuration system which intelligently
-    compares current modem settings with desired values from a YAML configuration
-    file and only changes settings that differ from the desired state.
-    
-    Args:
-        config: Configuration dictionary containing connection settings
-        config_file: Path to the YAML configuration file
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
-    """
-    # Set up logging
-    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
-    logger.log_info(f"Running smart configuration on {config['PORT']} at {config['BAUDRATE']} baud...")
-    logger.log_info(f"Using configuration file: {config_file}")
-    
-    # Create a modem communicator
-    modem = ModemCommunicator(config, logger)
-    
-    try:
-        # Connect to the modem
-        if not modem.connect():
-            logger.log_error(f"Failed to connect to modem on {config['PORT']}")
-            return 1
-        
-        logger.log_info("Connected to modem. Running smart configuration...")
-        
-        # Verify the modem is a Quectel EG25
-        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
-        if not is_quectel_eg25:
-            logger.log_error("Modem verification failed. Smart configuration is designed for Quectel EG25 modems.")
-            logger.log_error("Cannot proceed with smart configuration. Please check your hardware.")
-            modem.disconnect()
-            logger.close()
-            return 1
-        
-        # Run the smart configuration system
-        logger.log_info("Applying smart configuration...")
-        success = apply_smart_configuration(modem, config_file, logger)
-        
-        # Show summary
-        logger.log_info("-" * 50)
-        if success:
-            logger.log_info("Smart configuration SUCCESSFUL")
-            logger.log_info("All modem settings have been verified and updated as needed.")
-            return 0
-        else:
-            logger.log_error("Smart configuration FAILED")
-            logger.log_error("Some settings could not be applied. Check the logs for details.")
-            return 1
-            
-    except FileNotFoundError:
-        logger.log_error(f"Configuration file not found: {config_file}")
-        logger.log_error("Please create a YAML configuration file or specify a different path with --config-file")
-        return 1
-        
-    except Exception as e:
-        logger.log_error(f"Error during smart configuration: {str(e)}")
-        return 1
-        
-    finally:
-        # Clean up
-        modem.disconnect()
-        logger.close()
-
-
-def show_detailed_modem_info(config: Dict[str, Any]) -> int:
-    """
-    Show detailed information about the connected modem.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
-    """
-    # Set up temporary logging to stdout only
-    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
-    logger.log_info(f"Getting modem information from {config['PORT']} at {config['BAUDRATE']} baud...")
-    
-    # Create a modem communicator
-    modem = ModemCommunicator(config, logger)
-    
-    try:
-        # Connect to the modem
-        if not modem.connect():
-            logger.log_error(f"Failed to connect to modem on {config['PORT']}")
-            return 1
-        
-        logger.log_info("Connected to modem. Getting detailed information...")
-        
-        # Verify the modem is a Quectel EG25
-        is_quectel_eg25 = verify_quectel_eg25_modem(modem, logger)
-        if not is_quectel_eg25:
-            logger.log_warning("Modem verification failed. Some commands may not work properly.")
-        
-        # Commands to retrieve detailed information
-        info_commands = [
-            ("AT+CGMI", "Manufacturer"),
-            ("AT+CGMM", "Model"),
-            ("AT+CGMR", "Firmware Version"),
-            ("AT+CGSN", "IMEI/Serial Number"),
-            ("AT+QCCID", "SIM ICCID"),
-            ("AT+CIMI", "SIM IMSI"),
-            ('AT+QMBNCFG="List"', "Carrier Profile"),
-            ('AT+QCFG="band"', "Band Configuration"),
-            ('AT+QGPSCFG="gnssconfig"', "GNSS Configuration"),
-            ("AT+QNWINFO", "Network Information"),
-            ("AT+CSQ", "Signal Quality"),
-            ("AT+COPS?", "Operator"),
-            ('AT+QENG="servingcell"', "Serving Cell Info"),
-            ('AT+QENG="neighbourcell"', "Neighbor Cells")
-        ]
-        
-        modem_data = {}
-        print("\nDetailed Modem Information")
-        print("=========================")
-        
-        for cmd, description in info_commands:
-            print(f"\n{description}:")
-            print("-" * (len(description) + 1))
-            
-            success, response = modem.execute_command(cmd)
-            
-            if success:
-                # Clean up the response
-                clean_response = response.replace(cmd, "").replace("OK", "").strip()
-                
-                # Format the output based on the command
-                if "QMBNCFG" in cmd:
-                    # Special formatting for MBN list
-                    mbn_lines = clean_response.split("\n")
-                    formatted_lines = []
-                    for line in mbn_lines:
-                        if "+QMBNCFG:" in line:
-                            formatted_lines.append("  " + line.replace("+QMBNCFG:", "").strip())
-                    if formatted_lines:
-                        print("\n".join(formatted_lines))
-                    else:
-                        print("  No carrier profiles found")
-                
-                elif "QENG=" in cmd:
-                    # Special formatting for QENG responses
-                    eng_lines = clean_response.split("\n")
-                    for line in eng_lines:
-                        if "+QENG:" in line:
-                            print("  " + line.replace("+QENG:", "").strip())
-                
-                elif "QCFG=" in cmd or "QGPSCFG=" in cmd:
-                    # Special formatting for configuration responses
-                    if "+" in clean_response:
-                        parts = clean_response.split("+")[1].split(":")
-                        if len(parts) > 1:
-                            print("  " + parts[1].strip())
-                        else:
-                            print("  " + clean_response)
-                    else:
-                        print("  " + clean_response)
-                
-                else:
-                    # Default formatting for simpler responses
-                    if "+" in clean_response:
-                        parts = clean_response.split("+")
-                        for part in parts:
-                            if ":" in part:
-                                print("  " + part.split(":", 1)[1].strip())
-                            elif part.strip():
-                                print("  " + part.strip())
-                    else:
-                        print("  " + clean_response)
-            else:
-                print(f"  Error: Command failed")
-        
-        return 0
-            
-    except Exception as e:
-        logger.log_error(f"Error getting modem information: {str(e)}")
-        return 1
-        
-    finally:
-        # Clean up
-        modem.disconnect()
-        logger.close()
-
-
-def verify_quectel_eg25_modem(modem: ModemCommunicator, logger: ModemLogger) -> bool:
-    """
-    Verify that the connected modem is a Quectel EG25.
-    
-    Args:
-        modem: The modem communicator instance
-        logger: The logger instance
-    
-    Returns:
-        bool: True if the modem is a Quectel EG25, False otherwise
-    """
-    logger.log_info("Verifying modem type...")
-    
-    # Check manufacturer
-    success, manufacturer_response = modem.execute_command("AT+CGMI")
-    if not success:
-        logger.log_error("Failed to get modem manufacturer.")
-        return False
-    
-    # Clean up the response
-    manufacturer = manufacturer_response.replace("AT+CGMI", "").replace("OK", "").strip()
-    if "+CGMI:" in manufacturer_response:
-        manufacturer = manufacturer.split("+CGMI:")[1].strip()
-    
-    if "QUECTEL" not in manufacturer.upper():
-        logger.log_error(f"Unsupported modem manufacturer: {manufacturer}. This program requires a Quectel modem.")
-        return False
-    
-    # Check model
-    success, model_response = modem.execute_command("AT+CGMM")
-    if not success:
-        logger.log_error("Failed to get modem model.")
-        return False
-    
-    # Clean up the response
-    model = model_response.replace("AT+CGMM", "").replace("OK", "").strip()
-    if "+CGMM:" in model_response:
-        model = model.split("+CGMM:")[1].strip()
-    
-    if not (model.upper().startswith("EG25") or "EG25" in model.upper()):
-        logger.log_error(f"Unsupported modem model: {model}. This program requires an EG25 modem.")
-        logger.log_info("Supported models: EG25-G, EG25-E, EG25-AUT, etc.")
-        return False
-    
-    logger.log_info(f"Verified modem: Quectel {model}")
-    return True
 
 
 def main():
@@ -1271,152 +918,12 @@ def main():
     if args.signal_monitor:
         return monitor_signal_strength(config)
     
-    # Apply remaining command-line argument overrides to config
-    if args.csv_dir:
-        config["CSV_DIR"] = args.csv_dir
-    if args.csv_filename:
-        config["CSV_FILENAME"] = args.csv_filename
-    if args.json_dir:
-        config["JSON_DIR"] = args.json_dir
-    if args.json_filename:
-        config["JSON_FILENAME"] = args.json_filename
-    config["USE_DATABASE"] = args.use_database
-    if args.db_type:
-        config["DB_TYPE"] = args.db_type
-    if args.db_path:
-        config["DB_PATH"] = args.db_path
-    if args.fast_interval:
-        config["FAST_COMMAND_INTERVAL"] = args.fast_interval
-    if args.medium_interval:
-        config["MEDIUM_COMMAND_INTERVAL"] = args.medium_interval
-    if args.slow_interval:
-        config["SLOW_COMMAND_INTERVAL"] = args.slow_interval
-    
-    # If --test-connection is specified, test the modem connection and exit
-    if args.test_connection:
-        return test_modem_connection(config)
-    
-    # If --export-config is specified, export the configuration to a file and exit
-    if args.export_config:
-        return export_config_to_file(config, args.export_config)
-    
-    # Initialize logger
-    logger = ModemLogger(config["LOG_DIR"], config["LOG_LEVEL"])
-    logger.log_info("Cell War Driver starting...")
-    
-    # Log the active configuration
-    logger.log_info("Active configuration:")
-    logger.log_info(f"  - Port: {config['PORT']}")
-    logger.log_info(f"  - Baud rate: {config['BAUDRATE']}")
-    logger.log_info(f"  - Command delay: {config['COMMAND_DELAY']}s")
-    logger.log_info(f"  - Fast loop interval: {config['FAST_COMMAND_INTERVAL']}s")
-    logger.log_info(f"  - Medium loop interval: {config['MEDIUM_COMMAND_INTERVAL']}s")
-    logger.log_info(f"  - Slow loop interval: {config['SLOW_COMMAND_INTERVAL']}s")
-    
-    # Initialize modem communicator
-    modem = ModemCommunicator(config, logger)
-    
-    # Initialize parser with JSON support
-    parser = ModemResponseParser(
-        config["CSV_DIR"], 
-        config["CSV_FILENAME"],
-        config["JSON_DIR"],
-        config["JSON_FILENAME"],
-        logger
-    )
-    
-    # Set up signal handling for graceful exit
-    def signal_handler(sig, frame):
-        logger.log_info("Signal received, shutting down...")
-        modem.disconnect()
-        logger.close()
-        sys.exit(0)
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    # Get all command sets
-    commands = setup_modem_commands()
-    
-    # Variables for timing the command loops
-    fast_last_run = 0
-    medium_last_run = 0
-    slow_last_run = 0
-    
-    try:
-        # Connect to the modem
-        if not modem.connect():
-            logger.log_error("Failed to connect to modem. Exiting.")
-            return 1
-        
-        # Verify that the modem is a Quectel EG25
-        if not verify_quectel_eg25_modem(modem, logger):
-            logger.log_error("Modem verification failed. This program requires a Quectel EG25 modem.")
-            logger.log_error("Please check your hardware and connection settings.")
-            modem.disconnect()
-            logger.close()
-            return 1
-        
-        # Set up the modem using either traditional setup or smart configuration
-        if args.smart_config:
-            logger.log_info("Using smart configuration system...")
-            if not apply_smart_configuration(modem, args.config_file, logger):
-                logger.log_error("Failed to apply smart configuration. Continuing with limited functionality.")
-        else:
-            logger.log_info("Using traditional modem setup...")
-            if not modem_setup(modem, logger):
-                logger.log_error("Failed to set up modem. Continuing with limited functionality.")
-        
-        # Collect static modem information
-        if not collect_modem_info(modem, parser, logger):
-            logger.log_error("Failed to collect modem information. Continuing with limited functionality.")
-        
-        # Verify that the modem is a Quectel EG25
-        if not verify_quectel_eg25_modem(modem, logger):
-            logger.log_error("Modem verification failed. This program requires a Quectel EG25 modem.")
-            return 1
-        
-        # Main loop for gathering cell information
-        logger.log_info("Starting main monitoring loop...")
-        
-        while True:
-            current_time = time.time()
-            
-            # Run fast loop commands
-            if current_time - fast_last_run >= config["FAST_COMMAND_INTERVAL"]:
-                logger.log_info("Running fast loop commands...")
-                success, total = run_command_set(modem, parser, commands["fast_loop"], logger)
-                logger.log_info(f"Fast loop completed. Success: {success}/{total}")
-                fast_last_run = current_time
-            
-            # Run medium loop commands
-            if current_time - medium_last_run >= config["MEDIUM_COMMAND_INTERVAL"]:
-                logger.log_info("Running medium loop commands...")
-                success, total = run_command_set(modem, parser, commands["medium_loop"], logger)
-                logger.log_info(f"Medium loop completed. Success: {success}/{total}")
-                medium_last_run = current_time
-            
-            # Run slow loop commands
-            if current_time - slow_last_run >= config["SLOW_COMMAND_INTERVAL"]:
-                logger.log_info("Running slow loop commands...")
-                success, total = run_command_set(modem, parser, commands["slow_loop"], logger)
-                logger.log_info(f"Slow loop completed. Success: {success}/{total}")
-                slow_last_run = current_time
-            
-            # Sleep a short time to prevent CPU hogging
-            time.sleep(1.0)
-    
-    except Exception as e:
-        logger.log_error(f"Unexpected error: {str(e)}")
-        return 1
-    
-    finally:
-        # Clean up
-        modem.disconnect()
-        logger.close()
-        logger.log_info("Cell War Driver shut down.")
-    
-    return 0
+    # If --oneshot is specified, run smart config, then each command cycle once, then exit
+    if args.oneshot:
+        return oneshot_mode(config, args.config_file)
+
+    # Default behavior: Run the main Cell War Driver loop
+    return run_main_loop(config, args)
 
 
 if __name__ == "__main__":
