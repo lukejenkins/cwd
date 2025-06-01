@@ -30,11 +30,16 @@ The purpose of this project is to create a python program that:
   - [X] A text based log file
   - [X] Some sort of parsed data file
   - [ ] Possibly a database of some sort
+- [X] Switch from clobering modem config each time it is run, move to a YAML configuration file and have the program check config and only make a change if needed. This will reduce wear on the flash memory of the modem.
+- [ ] Move command lists to config file(s)
 
 ### Longer term goals
 
 - [ ] Add support for gathering location information from gpsd
-- [X] Switch from clobering modem config each time it is run, move to a configuration file (YAML?) and have the program check config and only make a change if needed. This will reduce wear on the flash memory of the modem.
+  - [ ] Log extra location information from additional location data sources
+    - [ ] Any GPS functions in any cell modems
+    - [ ] raw gnss data
+  - [ ] RTK support?
 - [ ] Support for multiple cell modem command sets
   - [ ] Telit LM960
   - [ ] Quectel RM5xxN Series
@@ -44,7 +49,7 @@ The purpose of this project is to create a python program that:
 - [ ] Gather data using "full scan" style commands that some cell modems support
   - [ ] Certain Telit Modems - AT#CSURVC
   - [ ] Certain Quectel Modems - AT+QSCAN=X,Y
-- [ ] Log extra location information from additional location data sources such as cell modems, gpsd, raw gnss data
+
 - [ ] Automatically identify cell modem type and set up for scanning
 - [ ] Support for formatting data to submit to wigle.net
 - [ ] Generate coverage maps
