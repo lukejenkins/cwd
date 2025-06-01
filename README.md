@@ -29,30 +29,46 @@ The purpose of this project is to create a python program that:
 - [X] We will record all output to
   - [X] A text based log file
   - [X] Some sort of parsed data file
-  - [ ] Possibly a database of some sort
 - [X] Switch from clobering modem config each time it is run, move to a YAML configuration file and have the program check config and only make a change if needed. This will reduce wear on the flash memory of the modem.
-- [ ] Move command lists to config file(s)
 
-### Longer term goals
+
+### To-Do / Longer term goals
 
 - [ ] Add support for gathering location information from gpsd
   - [ ] Log extra location information from additional location data sources
     - [ ] Any GPS functions in any cell modems
     - [ ] raw gnss data
   - [ ] RTK support?
-- [ ] Support for multiple cell modem command sets
+- [P] Automatically detect and parae cell modem
+  - [X] Make
+  - [X] Model
+  - [ ] Code Version
+  - [ ] Serial Port(s)
+  - [ ] Supported RAT/Band pairs
+- [ ] Move command lists to config file(s)
+- [ ] Abstract the desired outcome from the actual command & parsing. This seems like a necessary step for the ability to handle multiple makes/models/versions of cell modems
+- [ ] Support for multiple cell modem types
   - [ ] Telit LM960
   - [ ] Quectel RM5xxN Series
   - [ ] Quectel RM5xxQ Series
   - [ ] Sierra Wireless EM74xx/MC74xx Series
+- [ ] Check cell modem firmware versions
+  - [ ] warn on versions that dont match tested versions 
+  - [ ] use different versions of a command / parser per modem code version
+- [ ] Automatically configure and start scanning on any allow-listed cell modem make/model/versions/serials
 - [ ] Use multiple cell modems to gather more data at once. Perhaps one per major cell provider in an area.
 - [ ] Gather data using "full scan" style commands that some cell modems support
   - [ ] Certain Telit Modems - AT#CSURVC
   - [ ] Certain Quectel Modems - AT+QSCAN=X,Y
-
-- [ ] Automatically identify cell modem type and set up for scanning
 - [ ] Support for formatting data to submit to wigle.net
 - [ ] Generate coverage maps
+- [ ] Improve error handling and response
+  - [ ] Better handle unexpected inputs
+  - [ ] Gracefully Handle modem disconnects/reconnects
+    - [ ] until modem reconnects are implemented, gracefully exit if the modem disconnects.
+- [ ] Add automated tests (unit tests, integration tests) for better code quality
+  - [ ] Gather some sample data that can be public to test against
+- [ ] Implement a database
 
 ## Commands
 
