@@ -68,6 +68,10 @@ The purpose of this project is to create a python program that:
 - [ ] Add automated tests (unit tests, integration tests) for better code quality
   - [ ] Gather some sample data that can be public to test against
 - [ ] Implement a database
+- [ ] Time stamps and GNSS location once per second plus at the beginning and end of any loop.
+- [ ] Check gps lock and speed before each med and long loop. If over a speed set in .env (5mph, 30mph), skip that loop.
+- [ ] Keep list of bands seen, only scan those.
+- [ ] Have a list of regulatory bands in .env and only scan those.
 
 ## Commands
 
@@ -76,10 +80,7 @@ Previously there was a list of modem commands here. Rather than maintaining the 
 ## Tech Stack
 
 - Python 3.x
-- [pyserial](https://pypi.org/project/pyserial/)
-  - The pyserial library provides a simple interface for reading and writing data to the serial port.
-- [python-dotenv](https://pypi.org/project/python-dotenv/)
-  - The dotenv library is used to load environment variables from a .env file into the Python environment.
+- See [requirements.txt](requirements.txt) for a complete list of dependencies.
 
 ## Usage
 
