@@ -80,18 +80,19 @@ def run_command():
                                    stderr=subprocess.PIPE,
                                    text=True,
                                    cwd=SCRIPT_DIR)
-        
-        # Display output in real-time
+          # Display output in real-time
         output_display.delete(1.0, tk.END)
         
-        while True:
-            output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                output_display.insert(tk.END, output)
-                output_display.see(tk.END)
-                root.update()
+        # Check that stdout is available for reading
+        if process.stdout is not None:
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    output_display.insert(tk.END, output)
+                    output_display.see(tk.END)
+                    root.update()
         
         # Get any remaining output and errors
         stdout, stderr = process.communicate()
