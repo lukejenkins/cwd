@@ -368,6 +368,9 @@ def _parse_quectel_signal_quality(lines: List[str], result: Dict[str, Any]) -> N
             values = parts[1].strip().split(",")
             if not values:
                 continue
+            
+            # Initialize sysmode to avoid unbound variable error
+            sysmode = ""
                 
             try:
                 if len(values) >= 1:
@@ -905,7 +908,7 @@ def parse_cell_info(command: str, response: str) -> Dict[str, Any]:
 class ModemResponseParser:
     """Handles parsing of modem responses and saves data to various formats."""
     
-    def __init__(self, csv_dir: str, csv_filename: str, json_dir: str = None, json_filename: str = None, logger = None):
+    def __init__(self, csv_dir: str, csv_filename: str, json_dir: Optional[str] = None, json_filename: Optional[str] = None, logger = None):
         """
         Initialize the parser.
         

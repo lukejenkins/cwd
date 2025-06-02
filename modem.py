@@ -64,7 +64,7 @@ class ModemCommunicator:
             self.logger.log_info("Disconnected from modem")
         self.connected = False
     
-    def send_command(self, command: str, wait_time: float = None) -> str:
+    def send_command(self, command: str, wait_time: Optional[float] = None) -> str:
         """
         Send a command to the modem and return the response.
         
@@ -94,9 +94,8 @@ class ModemCommunicator:
         # Wait for response
         if wait_time is None:
             wait_time = self.command_delay
-        time.sleep(wait_time)
-        
-        # Read response
+        time.sleep(float(wait_time if wait_time is not None else 0.1))  # Provide a default if wait_time is None
+          # Read response
         response = ""
         while self.serial.in_waiting:
             chunk = self.serial.read(self.serial.in_waiting).decode('utf-8', errors='replace')
@@ -107,7 +106,7 @@ class ModemCommunicator:
         self.logger.log_response(response.strip())
         return response
     
-    def execute_command(self, command: str, retries: int = None) -> Tuple[bool, str]:
+    def execute_command(self, command: str, retries: Optional[int] = None) -> Tuple[bool, str]:
         """
         Execute a command with retry logic and response checking.
         
@@ -116,10 +115,13 @@ class ModemCommunicator:
             retries: Number of retries (defaults to self.retry_count)
             
         Returns:
-            Tuple[bool, str]: Success status and response
-        """
+            Tuple[bool, str]: Success status and response        """
         if retries is None:
             retries = self.retry_count
+        
+        # Ensure retries is a valid integer (fallback to 3 if config value is invalid)
+        if not isinstance(retries, int) or retries < 0:
+            retries = 3
         
         attempt = 0
         while attempt <= retries:
