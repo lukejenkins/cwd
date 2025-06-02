@@ -31,7 +31,6 @@ The purpose of this project is to create a python program that:
   - [X] Some sort of parsed data file
 - [X] Switch from clobering modem config each time it is run, move to a YAML configuration file and have the program check config and only make a change if needed. This will reduce wear on the flash memory of the modem.
 
-
 ### To-Do / Longer term goals
 
 - [ ] Add support for gathering location information from gpsd
@@ -53,7 +52,7 @@ The purpose of this project is to create a python program that:
   - [ ] Quectel RM5xxQ Series
   - [ ] Sierra Wireless EM74xx/MC74xx Series
 - [ ] Check cell modem firmware versions
-  - [ ] warn on versions that dont match tested versions 
+  - [ ] warn on versions that dont match tested versions
   - [ ] use different versions of a command / parser per modem code version
 - [ ] Automatically configure and start scanning on any allow-listed cell modem make/model/versions/serials
 - [ ] Use multiple cell modems to gather more data at once. Perhaps one per major cell provider in an area.
@@ -73,20 +72,6 @@ The purpose of this project is to create a python program that:
 ## Commands
 
 Previously there was a list of modem commands here. Rather than maintaining the list in two places, I'm going to referr the reader to the main.py file where the commands are listed and documented.
-
-## Schemas
-
-### X Schema
-
-```json
-#Schema goes here
-```
-
-### Y Schema
-
-```json
-#Schema goes here
-```
 
 ## Tech Stack
 

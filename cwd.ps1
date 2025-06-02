@@ -41,16 +41,22 @@ if (-not (Test-Path -Path "$scriptDir\venv")) {
 
 # Set default COM port if not specified
 $comPort = "COM3"
+$portSpecified = $false
 for ($i = 0; $i -lt $args.Count; $i++) {
     if ($args[$i] -eq "--port" -and $i+1 -lt $args.Count) {
         $comPort = $args[$i+1]
+        $portSpecified = $true
         break
     }
 }
 
-# Pass all arguments to the main script
-Write-Host "Launching Cell War Driver..."
-python main.py $args
+# Pass all arguments to the main script, ensuring port is specified
+Write-Host "Launching Cell War Driver with port: $comPort"
+if ($portSpecified) {
+    python main.py $args
+} else {
+    python main.py --port $comPort $args
+}
 
 # If no arguments are passed, show help
 if ($args.Count -eq 0) {
