@@ -402,4 +402,3 @@ EG25GGBR07A08M2G_A0.301.A0.301
 +QICFG: "recv/ignore",(0-11),<msg_ignore>
 +QICFG: "wakeup/data",(0-11),<wakeup_data>
 ```
-
