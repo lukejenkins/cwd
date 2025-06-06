@@ -33,12 +33,12 @@ The purpose of this project is to create a python program that:
 
 ### To-Do / Longer term goals
 
-- [ ] Add support for gathering location information from gpsd
+- [P] Add support for gathering location information from gpsd
   - [ ] Log extra location information from additional location data sources
     - [ ] Any GPS functions in any cell modems
     - [ ] raw gnss data
   - [ ] RTK support?
-- [P] Automatically detect and parae cell modem
+- [P] Automatically detect and parse cell modem
   - [X] Make
   - [X] Model
   - [ ] Code Version

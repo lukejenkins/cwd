@@ -6,7 +6,8 @@ This module handles logging of AT commands, modem responses, and program events.
 import os
 import logging
 from datetime import datetime
-from typing import Optional, TextIO
+from typing import Optional, TextIO, Dict, Any
+import json
 
 
 class ModemLogger:
@@ -45,6 +46,8 @@ class ModemLogger:
         
         self.logger.info(f"Logging initialized. Main log: {log_file}")
         self.logger.info(f"Raw log: {self.raw_log_file}")
+        self.log_dir = log_dir
+        self.log_level = log_level_num
     
     def log_command(self, command: str) -> None:
         """
@@ -96,7 +99,47 @@ class ModemLogger:
             message: The warning message to log
         """
         self.logger.warning(message)
-    
+
+    def _log(self, level: str, message: str) -> None:
+        """Internal method to log messages at a specific level."""
+        timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if level == "DEBUG":
+            self.logger.debug(message)
+        elif level == "INFO":
+            self.logger.info(message)
+        elif level == "WARNING":
+            self.logger.warning(message)
+        elif level == "ERROR":
+            self.logger.error(message)
+        elif level == "CRITICAL":
+            self.logger.critical(message)
+        self.raw_log.write(f"{timestamp_str} {level}: {message}\n")
+        self.raw_log.flush()
+
+    def log_debug(self, message: str) -> None:
+        """Logs a debug message."""
+        if self.log_level <= logging.DEBUG:
+            self._log("DEBUG", message)
+
+    def log_gpsd_data(self, gpsd_data: Dict[str, Any]) -> None:
+        """Logs GPSd data to a separate file and to the main log."""
+        if not self.log_dir:
+            return
+
+        timestamp_prefix = datetime.now().strftime("%Y%m%d_%H%M%S")
+        gpsd_log_filename = os.path.join(self.log_dir, f"{timestamp_prefix}_gpsd_data.json")
+
+        try:
+            with open(gpsd_log_filename, "a") as f:
+                json.dump(gpsd_data, f)
+                f.write("\n") # Add a newline for separation if logging multiple entries
+            self.log_info(f"GPSd data logged to {gpsd_log_filename}")
+            # Also log a summary to the main log
+            summary = f"GPSd data: time={gpsd_data.get('gnss_time')}, lat={gpsd_data.get('latitude')}, lon={gpsd_data.get('longitude')}, alt={gpsd_data.get('altitude')}, fix={gpsd_data.get('lock_status')}"
+            self._log("INFO", summary)
+        except Exception as e:
+            self.log_error(f"Failed to log GPSd data: {e}")
+
     def close(self) -> None:
         """Close the raw log file."""
         if self.raw_log and not self.raw_log.closed:

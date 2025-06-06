@@ -27,3 +27,6 @@ sqlalchemy>=1.4.0
 
 # For Windows GUI launcher
 # tkinter is typically bundled with Python installation
+
+# GPS support
+gpsd-py3

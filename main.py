@@ -1,3 +1,5 @@
+# Test comment to refresh analysis
+# filepath: c:\Users\ljenkins\Documents\GitHub\cwd\main.py
 """
 Cell War Driver (cwd) - Main Program
 
@@ -63,15 +65,22 @@ import time
 import signal
 import json
 import argparse
-import traceback
+import traceback # Added traceback import
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, Optional, List, Tuple # Added List and Tuple
 
-from .config import load_config  # Changed to relative import
-from .logger import ModemLogger  # Changed to relative import
-from .modem import ModemCommunicator  # Changed to relative import
-from .parser import ModemResponseParser  # Changed to relative import
-from .smart_config import apply_smart_configuration  # Changed to relative import
+# Attempt to import gpsd, but make it optional so the program can run without it
+try:
+    import gpsd as gpsd_client # Use an alias to avoid potential global/local scope issues
+except ImportError:
+    gpsd_client = None # type: ignore 
+    print("gpsd library not found. GPSd functionality will be disabled.")
+
+from config import load_config
+from logger import ModemLogger # Assuming ModemLogger is in logger.py
+from modem import ModemCommunicator # Assuming ModemCommunicator is in modem.py
+from parser import ModemResponseParser  # Changed to relative import
+from smart_config import apply_smart_configuration  # Changed to relative import
 
 # Version information
 __version__ = "1.0.0"
@@ -640,6 +649,93 @@ def monitor_signal_strength(config: Dict[str, Any]) -> int:
             logger.close()
 
 
+def get_gpsd_fix(config: Dict[str, Any], logger: ModemLogger) -> Optional[Dict[str, Any]]:
+    """
+    Connects to GPSd, fetches the current GPS fix, and returns structured data.
+
+    Args:
+        config: Application configuration dictionary.
+        logger: Application logger instance.
+
+    Returns:
+        A dictionary containing GPS fix data if successful, None otherwise.
+    """
+    if gpsd_client is None:
+        logger.log_warning("GPSd library not available. Skipping GPSd fix.")
+        return None
+    try:
+        gpsd_server = config.get("GPSD_SERVER", "localhost")
+        gpsd_port = config.get("GPSD_PORT", 2947)
+        
+        logger.log_debug(f"Attempting to connect to GPSd at {gpsd_server}:{gpsd_port}")
+        gpsd_client.connect(host=gpsd_server, port=gpsd_port)
+        logger.log_debug("Successfully connected to GPSd.")
+        
+        packet = gpsd_client.get_current()
+        # gpsd_client.close() # gpsd-py3 handles connection implicitly; explicit close not typically needed here.
+
+        # packet.mode: 0=no mode, 1=no fix, 2=2D fix, 3=3D fix
+        # getattr is used for safety as GpsResponse attributes are dynamic.
+        current_mode = getattr(packet, 'mode', 0)
+
+        if current_mode >= 2:  # We have a 2D or 3D fix
+            logger.log_debug(f"GPSd mode {current_mode} fix detected. Extracting data.")
+
+            # Prioritize altMSL for altitude, fallback to 'alt'
+            # altMSL: Altitude (Mean Sea Level) in meters.
+            # alt: Altitude (Height Above Ellipsoid or MSL if MSL not separately reported) in meters.
+            altitude_val = getattr(packet, 'altMSL', None)
+            if altitude_val is None:
+                altitude_val = getattr(packet, 'alt', None)
+
+            fix_data = {
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "latitude": getattr(packet, 'lat', None),
+                "longitude": getattr(packet, 'lon', None),
+                "altitude": altitude_val,
+                "speed": getattr(packet, 'speed', None),      # Speed over ground in meters/second
+                "course": getattr(packet, 'track', None),     # Course over ground, degrees from true north
+                "gnss_time": getattr(packet, 'time', None),   # ISO8601 timestamp from GNSS device
+                "lock_status": current_mode,                  # 0=no mode, 1=no fix, 2=2D, 3=3D
+                # TPV status: 0=NO_FIX, 1=FIX, 2=DGPS_FIX. This is a basic quality indicator.
+                "signal_quality": getattr(packet, 'status', None), 
+                "satellites_used": getattr(packet, 'sats', None) # Number of satellites used in solution
+            }
+
+            # A 2D/3D fix must have latitude and longitude to be considered valid.
+            if fix_data["latitude"] is not None and fix_data["longitude"] is not None:
+                logger.log_info(
+                    f"GPSd Fix: Lat={fix_data['latitude']:.6f}, Lon={fix_data['longitude']:.6f}, "
+                    f"Alt={fix_data['altitude']}, Speed={fix_data['speed']}, Course={fix_data['course']}"
+                )
+                return fix_data
+            else:
+                logger.log_warning(
+                    f"GPSd: Mode {current_mode} fix, but latitude/longitude data is missing from packet."
+                )
+                return None
+            
+        elif current_mode == 1:
+            logger.log_info("GPSd: No fix yet (mode 1). Waiting for satellite lock.")
+            return None
+        else:  # mode == 0 or other unexpected mode
+            logger.log_info(f"GPSd: No GPS data or inactive (mode {current_mode}).")
+            return None
+
+    except ConnectionRefusedError:
+        logger.log_error(f"GPSd connection refused. Ensure GPSd is running at {config.get('GPSD_SERVER', 'localhost')}:{config.get('GPSD_PORT', 2947)}.")
+        return None
+    except gpsd_client.NoFixError:
+        logger.log_warning("GPSd: No fix could be obtained from GPSd (NoFixError).")
+        return None
+    except AttributeError as e:
+        # This might catch issues if GpsResponse is missing 'mode' or other fundamental attributes
+        logger.log_error(f"GPSd: Error accessing packet attribute: {e}. The GPSd packet might be malformed or incomplete.")
+        return None
+    except Exception as e:
+        logger.log_error(f"An unexpected error occurred while fetching GPSd data: {e}")
+        return None
+
 def run_main_loop(config: Dict[str, Any], args) -> int:
     """
     Run the main Cell War Driver loop.
@@ -682,6 +778,11 @@ def run_main_loop(config: Dict[str, Any], args) -> int:
         
         logger.log_info("Starting main monitoring loop... Press Ctrl+C to stop")
         
+        # Initial GPSd fix
+        gpsd_fix_start = get_gpsd_fix(config, logger)
+        if gpsd_fix_start:
+            logger.log_gpsd_data(gpsd_fix_start) # Assumes logger has a method to log this
+
         fast_interval = args.fast_interval
         medium_interval = args.medium_interval
         slow_interval = args.slow_interval
@@ -692,6 +793,11 @@ def run_main_loop(config: Dict[str, Any], args) -> int:
         while True:
             current_time = time.time()
             
+            # GPSd fix at start of loop iteration
+            loop_gpsd_fix_start = get_gpsd_fix(config, logger)
+            if loop_gpsd_fix_start:
+                logger.log_gpsd_data(loop_gpsd_fix_start) # Assumes logger has a method to log this
+
             # Run fast loop commands
             run_command_set(modem, parser, commands["fast_loop"], logger, "fast_loop")
             
@@ -704,7 +810,12 @@ def run_main_loop(config: Dict[str, Any], args) -> int:
             if current_time - last_slow >= slow_interval:
                 run_command_set(modem, parser, commands["slow_loop"], logger, "slow_loop")
                 last_slow = current_time
-                
+            
+            # GPSd fix at end of loop iteration
+            loop_gpsd_fix_end = get_gpsd_fix(config, logger)
+            if loop_gpsd_fix_end:
+                logger.log_gpsd_data(loop_gpsd_fix_end) # Assumes logger has a method to log this
+
             time.sleep(fast_interval)
             
     except KeyboardInterrupt:
@@ -715,6 +826,11 @@ def run_main_loop(config: Dict[str, Any], args) -> int:
         logger.log_error(traceback.format_exc())
         return 1
     finally:
+        # Final GPSd fix
+        gpsd_fix_end = get_gpsd_fix(config, logger)
+        if gpsd_fix_end:
+            logger.log_gpsd_data(gpsd_fix_end) # Assumes logger has a method to log this
+            
         if modem and modem.connected:
             modem.disconnect()
         if logger:
@@ -815,6 +931,13 @@ Examples:
     db_group.add_argument("--db-path", type=str, default="output/cell_data.sqlite",
                        help="Path to the database file")
     
+    # GPSd settings
+    gpsd_group = parser.add_argument_group("GPSd Settings")
+    gpsd_group.add_argument("--gpsd-server", type=str,
+                            help="GPSd server address (default: localhost from .env or code default)")
+    gpsd_group.add_argument("--gpsd-port", type=int,
+                            help="GPSd server port (default: 2947 from .env or code default)")
+                            
     # Command cadence settings
     interval_group = parser.add_argument_group("Command Interval Settings")
     interval_group.add_argument("--fast-interval", type=float, default=5.0,
@@ -877,6 +1000,10 @@ def main():
         config["COMMAND_DELAY"] = args.command_delay
     if args.retry_count:
         config["RETRY_COUNT"] = args.retry_count
+    if args.gpsd_server:
+        config["GPSD_SERVER"] = args.gpsd_server
+    if args.gpsd_port:
+        config["GPSD_PORT"] = args.gpsd_port
     
     # If --list-commands is specified, display all command sets and exit
     if args.list_commands:

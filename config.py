@@ -48,6 +48,10 @@ def load_config() -> Dict[str, Any]:
         "DB_TYPE": os.getenv("DB_TYPE", "sqlite"),
         "DB_PATH": os.getenv("DB_PATH", os.path.join(os.getenv("LOG_DIR", "output"), "cell_data.sqlite")),
         
+        # GPSd settings
+        "GPSD_SERVER": os.getenv("GPSD_SERVER", "localhost"),
+        "GPSD_PORT": int(os.getenv("GPSD_PORT", "2947")),
+        
         # Command cadence settings - how often to run different command sets (in seconds)
         "FAST_COMMAND_INTERVAL": float(os.getenv("FAST_COMMAND_INTERVAL", "5.0")),
         "MEDIUM_COMMAND_INTERVAL": float(os.getenv("MEDIUM_COMMAND_INTERVAL", "30.0")),
