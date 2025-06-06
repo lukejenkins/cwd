@@ -67,11 +67,11 @@ import traceback
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 
-from config import load_config
-from logger import ModemLogger
-from modem import ModemCommunicator
-from parser import ModemResponseParser
-from smart_config import apply_smart_configuration
+from .config import load_config  # Changed to relative import
+from .logger import ModemLogger  # Changed to relative import
+from .modem import ModemCommunicator  # Changed to relative import
+from .parser import ModemResponseParser  # Changed to relative import
+from .smart_config import apply_smart_configuration  # Changed to relative import
 
 # Version information
 __version__ = "1.0.0"

@@ -6,11 +6,11 @@ settings against desired configuration and only applies changes when needed.
 This reduces flash memory wear by avoiding unnecessary writes.
 """
 
-import yaml
-import re
+import re  # Added re import
+import yaml  # Added yaml import
 from typing import Dict, Any, Tuple, Optional, List
-from modem import ModemCommunicator
-from logger import ModemLogger
+from .modem import ModemCommunicator
+from .logger import ModemLogger
 
 
 class SmartModemConfigurator:
