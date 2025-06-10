@@ -9,8 +9,8 @@ This reduces flash memory wear by avoiding unnecessary writes.
 import re  # Added re import
 import yaml  # Added yaml import
 from typing import Dict, Any, Tuple, Optional, List
-from .modem import ModemCommunicator
-from .logger import ModemLogger
+from modem import ModemCommunicator
+from logger import ModemLogger
 
 
 class SmartModemConfigurator:

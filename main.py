@@ -681,25 +681,44 @@ def get_gpsd_fix(config: Dict[str, Any], logger: ModemLogger) -> Optional[Dict[s
         if current_mode >= 2:  # We have a 2D or 3D fix
             logger.log_debug(f"GPSd mode {current_mode} fix detected. Extracting data.")
 
+            # Helper function to safely extract values, calling methods if needed
+            def safe_getattr(obj, attr_name, default=None):
+                """Safely get attribute value, calling it if it's a method."""
+                try:
+                    value = getattr(obj, attr_name, default)
+                    # If it's a callable (method), call it to get the actual value
+                    if callable(value):
+                        return value()
+                    return value
+                except Exception:
+                    return default
+
             # Prioritize altMSL for altitude, fallback to 'alt'
             # altMSL: Altitude (Mean Sea Level) in meters.
             # alt: Altitude (Height Above Ellipsoid or MSL if MSL not separately reported) in meters.
-            altitude_val = getattr(packet, 'altMSL', None)
+            altitude_val = safe_getattr(packet, 'altMSL', None)
             if altitude_val is None:
-                altitude_val = getattr(packet, 'alt', None)
+                altitude_val = safe_getattr(packet, 'alt', None)
+            
+            # Extract GNSS time and ensure it's JSON serializable
+            gnss_time_val = safe_getattr(packet, 'time', None)
+            if gnss_time_val is not None and hasattr(gnss_time_val, 'isoformat'):
+                gnss_time_val = str(gnss_time_val) + "Z"
+            elif gnss_time_val is not None:
+                gnss_time_val = str(gnss_time_val)
 
             fix_data = {
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "latitude": getattr(packet, 'lat', None),
-                "longitude": getattr(packet, 'lon', None),
+                "latitude": safe_getattr(packet, 'lat', None),
+                "longitude": safe_getattr(packet, 'lon', None),
                 "altitude": altitude_val,
-                "speed": getattr(packet, 'speed', None),      # Speed over ground in meters/second
-                "course": getattr(packet, 'track', None),     # Course over ground, degrees from true north
-                "gnss_time": getattr(packet, 'time', None),   # ISO8601 timestamp from GNSS device
+                "speed": safe_getattr(packet, 'speed', None),      # Speed over ground in meters/second
+                "course": safe_getattr(packet, 'track', None),     # Course over ground, degrees from true north
+                "gnss_time": gnss_time_val,   # ISO8601 timestamp from GNSS device
                 "lock_status": current_mode,                  # 0=no mode, 1=no fix, 2=2D, 3=3D
                 # TPV status: 0=NO_FIX, 1=FIX, 2=DGPS_FIX. This is a basic quality indicator.
-                "signal_quality": getattr(packet, 'status', None), 
-                "satellites_used": getattr(packet, 'sats', None) # Number of satellites used in solution
+                "signal_quality": safe_getattr(packet, 'status', None), 
+                "satellites_used": safe_getattr(packet, 'sats', None) # Number of satellites used in solution
             }
 
             # A 2D/3D fix must have latitude and longitude to be considered valid.

@@ -130,12 +130,23 @@ class ModemLogger:
         gpsd_log_filename = os.path.join(self.log_dir, f"{timestamp_prefix}_gpsd_data.json")
 
         try:
+            # Create a JSON-safe copy of the data
+            json_safe_data = {}
+            for key, value in gpsd_data.items():
+                try:
+                    # Test if the value is JSON serializable
+                    json.dumps(value)
+                    json_safe_data[key] = value
+                except (TypeError, ValueError):
+                    # If not serializable, convert to string representation
+                    json_safe_data[key] = str(value) if value is not None else None
+            
             with open(gpsd_log_filename, "a") as f:
-                json.dump(gpsd_data, f)
+                json.dump(json_safe_data, f)
                 f.write("\n") # Add a newline for separation if logging multiple entries
             self.log_info(f"GPSd data logged to {gpsd_log_filename}")
             # Also log a summary to the main log
-            summary = f"GPSd data: time={gpsd_data.get('gnss_time')}, lat={gpsd_data.get('latitude')}, lon={gpsd_data.get('longitude')}, alt={gpsd_data.get('altitude')}, fix={gpsd_data.get('lock_status')}"
+            summary = f"GPSd data: time={json_safe_data.get('gnss_time')}, lat={json_safe_data.get('latitude')}, lon={json_safe_data.get('longitude')}, alt={json_safe_data.get('altitude')}, fix={json_safe_data.get('lock_status')}"
             self._log("INFO", summary)
         except Exception as e:
             self.log_error(f"Failed to log GPSd data: {e}")
