@@ -5,7 +5,13 @@ This directory contains documentation for the Cell War Driver (cwd) project.
 ## Contents
 
 - [Smart Configuration System](smart_configuration.md) - Detailed documentation on the smart configuration system that intelligently manages modem settings
-- [Quectel EC2x and EG2x](../reference/quectel_ec2x_and_eg2x/) - Reference documentation specific to the Quectel EC2x and EG2x series modems
+- [Windows Usage](windows_usage.md) - Documentation about using this program under MS Windows.
+
+### Reference Materials
+
+- [Telit LM960](../reference/telit/lm960/) - Reference documentation specific to the Telit LM960 modem
+- [Quectel BG95-M3](../reference/quectel/bg95m3/) - Reference documentation specific to the Quectel BG95-M3 modem
+- [Quectel EC2x and EG2x](../reference/quectel/eg25g/) - Reference documentation specific to the Quectel EC25-G/EG25-G modems
 
 ## Project Overview
 
