@@ -860,6 +860,6 @@ AT+CSUBAT+QLINUXCMD
 
 **Disclaimer:**
 
-* This list is based on publicly available documents and common knowledge for Quectel modules.
-* Command availability and behavior can sometimes vary slightly between firmware versions or specific module sub-variants.
-* **Always refer to the official Quectel PDF manuals for the EG25 (or your specific module variant) as the definitive reference.**
+* This list is based on publicly available documents and common knowledge for this/these modules.
+* Command availability and behavior is often different between firmware versions or specific module sub-variants.
+* **Always refer to the official manufacturer PDF manuals for your module as the definitive reference.**
