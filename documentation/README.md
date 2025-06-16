@@ -5,7 +5,7 @@ This directory contains documentation for the Cell War Driver (cwd) project.
 ## Contents
 
 - [Smart Configuration System](smart_configuration.md) - Detailed documentation on the smart configuration system that intelligently manages modem settings
-- [Quectel EC2x and EG2x](quectel_ec2x_and_eg2x/) - Documentation specific to Quectel EC2x and EG2x series modems
+- [Quectel EC2x and EG2x](../reference/quectel_ec2x_and_eg2x/) - Reference documentation specific to the Quectel EC2x and EG2x series modems
 
 ## Project Overview
 
