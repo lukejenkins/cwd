@@ -78,7 +78,7 @@ except ImportError:
 
 from config import load_config
 from logger import ModemLogger # Assuming ModemLogger is in logger.py
-from modem import ModemCommunicator # Assuming ModemCommunicator is in modem.py
+from modem import ModemCommunicator # ModemCommunicator is in modem.py
 from parser import ModemResponseParser  # Changed to relative import
 from smart_config import apply_smart_configuration  # Changed to relative import
 
@@ -702,10 +702,13 @@ def get_gpsd_fix(config: Dict[str, Any], logger: ModemLogger) -> Optional[Dict[s
             
             # Extract GNSS time and ensure it's JSON serializable
             gnss_time_val = safe_getattr(packet, 'time', None)
-            if gnss_time_val is not None and hasattr(gnss_time_val, 'isoformat'):
-                gnss_time_val = str(gnss_time_val) + "Z"
-            elif gnss_time_val is not None:
+            # Convert to string immediately to avoid isoformat attribute error
+            if gnss_time_val is not None:
+                # Just convert to string directly - simplest and most reliable approach
                 gnss_time_val = str(gnss_time_val)
+                # Add Z if it looks like an ISO format but doesn't already end with Z
+                if 'T' in gnss_time_val and not gnss_time_val.endswith('Z'):
+                    gnss_time_val += "Z"
 
             fix_data = {
                 "timestamp": datetime.utcnow().isoformat() + "Z",

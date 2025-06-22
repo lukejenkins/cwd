@@ -9,16 +9,19 @@ If you encounter import errors when running the Cell War Driver, here are the mo
 The Cell War Driver uses a Python virtual environment to manage dependencies. On systems with externally managed Python (like Kali Linux), this is required.
 
 **Automatic Setup (Recommended):**
+
 ```bash
 ./cwd.sh --help
 ```
 
 The wrapper script (`cwd.sh`) will automatically:
+
 - Create a virtual environment if it doesn't exist
 - Install all required dependencies
 - Activate the environment and run the program
 
 **Manual Setup:**
+
 ```bash
 # Create virtual environment
 python3 -m venv .venv
@@ -36,30 +39,36 @@ python -B main.py --help
 ### 2. Common Import Issues
 
 #### Missing Dependencies
+
 **Error:** `ModuleNotFoundError: No module named 'dotenv'`
 **Solution:** Install dependencies with `pip install -r requirements.txt`
 
 #### GPSD Library Missing
+
 **Error:** `gpsd library not found. GPSd functionality will be disabled.`
 **Solution:** This is normal if you don't need GPS functionality. The program will work without it.
 
 #### Relative Import Errors
+
 **Error:** `ImportError: attempted relative import with no known parent package`
 **Solution:** This has been fixed in the current version. Make sure you're using the latest code.
 
 ### 3. System-Specific Issues
 
 #### Kali Linux / Debian Systems
+
 - Use the virtual environment approach (automatic via `cwd.sh`)
 - Don't use `--break-system-packages` as it can damage your system
 
 #### Permission Issues
+
 ```bash
 # Make the wrapper script executable
 chmod +x cwd.sh
 ```
 
 #### Serial Port Access
+
 ```bash
 # Add your user to the dialout group
 sudo usermod -a -G dialout $USER
@@ -101,6 +110,7 @@ cp .env.example .env
 ```
 
 Key settings to verify:
+
 - `PORT`: Your modem's serial port (check with `--scan-ports`)
 - `BAUDRATE`: Usually 115200 for most modems
 - `LOG_LEVEL`: Set to DEBUG for troubleshooting
@@ -108,6 +118,7 @@ Key settings to verify:
 ## Dependencies
 
 The program requires these Python packages:
+
 - python-dotenv: Environment variable loading
 - pyserial: Serial port communication
 - pyyaml: YAML configuration files
