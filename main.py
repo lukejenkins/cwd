@@ -789,9 +789,17 @@ def run_main_loop(config: Dict[str, Any], args) -> int:
             logger.log_error("Failed to connect to modem")
             return 1
             
-        if not modem_setup(modem, logger):
-            logger.log_error("Failed to setup modem")
-            return 1
+        if args.smart_config:
+            if not modem.initialize_modem():
+                logger.log_warning("Modem initialization failed, continuing anyway.")
+            
+            logger.log_info("Applying smart configuration...")
+            if not apply_smart_configuration(modem, args.config_file, logger):
+                logger.log_warning("Smart configuration failed. Continuing with main loop.")
+        else:
+            if not modem_setup(modem, logger):
+                logger.log_error("Failed to setup modem")
+                return 1
             
         # Collect static modem information
         collect_modem_info(modem, parser, logger)
@@ -800,59 +808,45 @@ def run_main_loop(config: Dict[str, Any], args) -> int:
         
         logger.log_info("Starting main monitoring loop... Press Ctrl+C to stop")
         
-        # Initial GPSd fix
-        gpsd_fix_start = get_gpsd_fix(config, logger)
-        if gpsd_fix_start:
-            logger.log_gpsd_data(gpsd_fix_start) # Assumes logger has a method to log this
-
-        fast_interval = args.fast_interval
-        medium_interval = args.medium_interval
-        slow_interval = args.slow_interval
-        
-        last_medium = 0
-        last_slow = 0
+        # Main loop timers
+        last_fast_loop_time = 0
+        last_medium_loop_time = 0
+        last_slow_loop_time = 0
         
         while True:
             current_time = time.time()
             
-            # GPSd fix at start of loop iteration
-            loop_gpsd_fix_start = get_gpsd_fix(config, logger)
-            if loop_gpsd_fix_start:
-                logger.log_gpsd_data(loop_gpsd_fix_start) # Assumes logger has a method to log this
+            # Attempt to get GPSd fix at the start of each loop iteration
+            gpsd_fix = get_gpsd_fix(config, logger)
+            if gpsd_fix:
+                parser.save_gpsd_data(gpsd_fix)
 
-            # Run fast loop commands
-            run_command_set(modem, parser, commands["fast_loop"], logger, "fast_loop")
-            
-            # Run medium loop commands
-            if current_time - last_medium >= medium_interval:
+            # Fast loop
+            if current_time - last_fast_loop_time >= config.get("FAST_INTERVAL", 5.0):
+                run_command_set(modem, parser, commands["fast_loop"], logger, "fast_loop")
+                last_fast_loop_time = current_time
+
+            # Medium loop
+            if current_time - last_medium_loop_time >= config.get("MEDIUM_INTERVAL", 30.0):
                 run_command_set(modem, parser, commands["medium_loop"], logger, "medium_loop")
-                last_medium = current_time
-                
-            # Run slow loop commands
-            if current_time - last_slow >= slow_interval:
-                run_command_set(modem, parser, commands["slow_loop"], logger, "slow_loop")
-                last_slow = current_time
-            
-            # GPSd fix at end of loop iteration
-            loop_gpsd_fix_end = get_gpsd_fix(config, logger)
-            if loop_gpsd_fix_end:
-                logger.log_gpsd_data(loop_gpsd_fix_end) # Assumes logger has a method to log this
+                last_medium_loop_time = current_time
 
-            time.sleep(fast_interval)
+            # Slow loop
+            if current_time - last_slow_loop_time >= config.get("SLOW_INTERVAL", 300.0):
+                run_command_set(modem, parser, commands["slow_loop"], logger, "slow_loop")
+                last_slow_loop_time = current_time
             
+            # Minimum sleep time to prevent high CPU usage
+            time.sleep(0.1)
+
     except KeyboardInterrupt:
-        logger.log_info("Main loop stopped by user")
+        logger.log_info("Cell War Driver stopped by user.")
         return 0
     except Exception as e:
         logger.log_error(f"Error in main loop: {str(e)}")
         logger.log_error(traceback.format_exc())
         return 1
     finally:
-        # Final GPSd fix
-        gpsd_fix_end = get_gpsd_fix(config, logger)
-        if gpsd_fix_end:
-            logger.log_gpsd_data(gpsd_fix_end) # Assumes logger has a method to log this
-            
         if modem and modem.connected:
             modem.disconnect()
         if logger:

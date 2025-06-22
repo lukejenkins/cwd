@@ -478,6 +478,35 @@ def _parse_quectel_network_info(lines: List[str], result: Dict[str, Any]) -> Non
                 pass
 
 
+    def save_gpsd_data(self, gpsd_fix: Dict[str, Any]) -> None:
+        """
+        Saves GPSd fix data to a JSON file.
+
+        Args:
+            gpsd_fix: A dictionary containing the GPSd fix data.
+        """
+        if not gpsd_fix:
+            return
+
+        try:
+            # Generate a timestamp for the filename
+            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            # Correctly join the path for the GPSd data file
+            gpsd_filename = os.path.join(self.json_dir, f"{timestamp}_gpsd_data.json")
+
+            # Ensure the directory exists
+            os.makedirs(self.json_dir, exist_ok=True)
+
+            # Write the data to the file
+            with open(gpsd_filename, 'w') as f:
+                json.dump(gpsd_fix, f, indent=4)
+            
+            self.logger.log_info(f"Successfully saved GPSd data to {gpsd_filename}")
+
+        except (IOError, TypeError) as e:
+            self.logger.log_error(f"Error saving GPSd data: {e}")
+
+
 def _parse_quectel_serving_cell(lines: List[str], result: Dict[str, Any]) -> None:
     """
     Parse Quectel serving cell information from AT+QENG="servingcell" response.
