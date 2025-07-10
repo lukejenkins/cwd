@@ -9,9 +9,7 @@ This directory contains documentation for the Cell War Driver (cwd) project.
 
 ### Reference Materials
 
-- [Telit LM960](../reference/telit/lm960/) - Reference documentation specific to the Telit LM960 modem
-- [Quectel BG95-M3](../reference/quectel/bg95m3/) - Reference documentation specific to the Quectel BG95-M3 modem
-- [Quectel EC2x and EG2x](../reference/quectel/eg25g/) - Reference documentation specific to the Quectel EC25-G/EG25-G modems
+Moved to <https://github.com/lukejenkins/cellular>
 
 ## Project Overview
 
